@@ -1,0 +1,142 @@
+# NotebookLM Skills Suite Registry
+# This file lists all available skills and their metadata
+
+registry_version: 1.0.0
+repository: https://github.com/serenakeyitan/nblm-skills
+author: NotebookLM Skills Suite
+license: MIT
+
+# Global dependencies
+system_requirements:
+  - python3 >= 3.8
+  - ffmpeg (for audio-overview and video-overview only)
+
+# Global configuration
+env_variables:
+  - GEMINI_API_KEY: Required for all skills
+  - ANTHROPIC_API_KEY: Optional fallback for all skills
+  - ELEVENLABS_API_KEY: Optional for premium audio quality
+
+# Installation
+quick_install: |
+  git clone https://github.com/serenakeyitan/nblm-skills.git
+  cd nblm-skills
+  ./install_all.sh
+
+# Skills
+skills:
+  - name: audio-overview
+    path: audio-overview/
+    description: Generate professional multi-speaker podcasts from research materials
+    category: content-generation
+    requires_ffmpeg: true
+    output_formats: [mp3, json]
+    typical_runtime: 2-3 minutes
+    api_usage: high
+
+  - name: video-overview
+    path: video-overview/
+    description: Create narrated videos with visual slides from research materials
+    category: content-generation
+    requires_ffmpeg: true
+    output_formats: [mp4, json]
+    typical_runtime: 3-5 minutes
+    api_usage: high
+
+  - name: mindmap
+    path: mindmap/
+    description: Generate interactive mind maps from research materials
+    category: visualization
+    requires_ffmpeg: false
+    output_formats: [html, mermaid]
+    typical_runtime: 30 seconds
+    api_usage: medium
+
+  - name: reports
+    path: reports/
+    description: Generate structured professional reports from research materials
+    category: documentation
+    requires_ffmpeg: false
+    output_formats: [md, pdf, docx]
+    typical_runtime: 30 seconds
+    api_usage: medium
+
+  - name: flashcards
+    path: flashcards/
+    description: Generate study flashcards from research materials
+    category: education
+    requires_ffmpeg: false
+    output_formats: [html, apkg, json]
+    typical_runtime: 30 seconds
+    api_usage: medium
+
+  - name: quiz
+    path: quiz/
+    description: Generate quizzes with multiple question types from research materials
+    category: education
+    requires_ffmpeg: false
+    output_formats: [html, json]
+    typical_runtime: 30 seconds
+    api_usage: medium
+
+  - name: infographic
+    path: infographic/
+    description: Create visual infographics from research data
+    category: visualization
+    requires_ffmpeg: false
+    output_formats: [png, svg]
+    typical_runtime: 1 minute
+    api_usage: medium
+
+  - name: data-table
+    path: data-table/
+    description: Extract structured data tables from research materials
+    category: data-extraction
+    requires_ffmpeg: false
+    output_formats: [xlsx, csv, json]
+    typical_runtime: 30 seconds
+    api_usage: medium
+
+# Categories
+categories:
+  content-generation:
+    description: Skills that generate rich media content (audio, video)
+    skills: [audio-overview, video-overview]
+
+  visualization:
+    description: Skills that create visual representations of data
+    skills: [mindmap, infographic]
+
+  documentation:
+    description: Skills that generate structured documents
+    skills: [reports]
+
+  education:
+    description: Skills for creating educational materials
+    skills: [flashcards, quiz]
+
+  data-extraction:
+    description: Skills for extracting and structuring data
+    skills: [data-table]
+
+# Usage patterns
+usage_examples:
+  - name: Research paper to podcast
+    skills: [audio-overview]
+    description: Convert academic papers into engaging podcast discussions
+
+  - name: Document to video presentation
+    skills: [video-overview]
+    description: Transform documents into narrated video presentations
+
+  - name: Complete study package
+    skills: [mindmap, flashcards, quiz]
+    description: Create comprehensive study materials from textbooks
+
+  - name: Research analysis suite
+    skills: [reports, data-table, infographic]
+    description: Generate professional analysis with data and visuals
+
+  - name: Full content transformation
+    skills: [audio-overview, video-overview, mindmap, reports, flashcards, quiz, infographic, data-table]
+    description: Transform research into all available formats

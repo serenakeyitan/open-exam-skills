@@ -1,6 +1,19 @@
 name: quiz
-description: Generate quizzes with multiple question types from research materials. Includes answer keys and explanations.
+description: 
 version: 1.0.0
 author: NotebookLM Skills Suite
 type: project
 gitignored: true
+
+# Installation
+install_script: scripts/install.sh
+
+# Dependencies
+requires:
+  - python3
+
+# Configuration
+env_template: .env.example
+
+# Entry point
+main: main.py

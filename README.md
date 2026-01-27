@@ -17,30 +17,50 @@ Transform your research materials into various formats:
 
 ## Quick Start
 
-### Prerequisites
+### Automatic Installation (Recommended)
 
-- Python 3.10+
-- Claude Code CLI
-- API Keys (provided in setup)
+Install all 8 skills with a single command:
 
-### Installation
-
-1. Clone this repository:
 ```bash
-git clone <repo-url>
+git clone https://github.com/serenakeyitan/nblm-skills.git
 cd nblm-skills
+./install_all.sh
 ```
 
-2. Each skill is independent. Navigate to the skill you want to use:
+This automatically:
+- ✅ Checks prerequisites (Python, FFmpeg)
+- ✅ Installs all dependencies for 8 skills
+- ✅ Creates .env templates
+- ✅ Verifies installation
+
+### Manual Installation
+
+If you prefer to install skills individually:
+
 ```bash
 cd audio-overview
+bash scripts/install.sh
+```
+
+Or install dependencies directly:
+
+```bash
 pip install -r requirements.txt
 ```
 
-3. Configure API keys (create `.env` file in skill directory):
+### Configuration
+
+**Option 1: Environment Variables (Recommended for Cloud)**
 ```bash
-GEMINI_API_KEY=your_gemini_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+export GEMINI_API_KEY="your_gemini_key"
+export ANTHROPIC_API_KEY="your_anthropic_key"
+```
+
+**Option 2: .env Files (Recommended for Local)**
+```bash
+cd audio-overview
+cp .env.example .env
+# Edit .env and add your API keys
 ```
 
 ### Usage with Claude Code
@@ -319,6 +339,43 @@ nblm-skills/
 - **Video**: FFmpeg, MoviePy, Pillow
 - **Data**: Pandas, OpenPyXL
 - **Validation**: Pydantic
+
+## Cloud Deployment
+
+This skills suite is designed for easy deployment in cloud environments and integration with Claude Code.
+
+### Deployment Options
+
+1. **GitHub Repository** (Recommended for Claude Code)
+   - Clone and install with `./install_all.sh`
+   - Skills load automatically when Claude invokes them
+   - Easy updates with `git pull`
+
+2. **Docker Container**
+   - Build: `docker build -t nblm-skills:latest .`
+   - Run: `docker run -e GEMINI_API_KEY=xxx nblm-skills:latest`
+
+3. **Cloud VM** (AWS, GCP, Azure)
+   - Deploy on Ubuntu/Debian instance
+   - Install FFmpeg: `sudo apt-get install ffmpeg`
+   - Run `./install_all.sh`
+
+4. **Serverless** (AWS Lambda, Cloud Functions)
+   - Deploy individual skills as functions
+   - See DEPLOYMENT.md for detailed instructions
+
+### For Claude Code Users
+
+When you download and use these skills:
+
+1. **Automatic Installation**: Each skill has `scripts/install.sh` that runs automatically
+2. **Dependency Management**: All Python packages install on first use
+3. **Configuration**: Uses `.env.example` as template
+4. **Isolation**: Each skill is completely independent
+
+**See**: [DEPLOYMENT.md](DEPLOYMENT.md) for complete cloud deployment guide, Docker configurations, and production best practices.
+
+---
 
 ## Configuration
 

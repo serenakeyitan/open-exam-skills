@@ -1,6 +1,19 @@
 name: infographic
-description: Create visual infographics from research data. Extract statistics and generate professional visualizations.
+description: 
 version: 1.0.0
 author: NotebookLM Skills Suite
 type: project
 gitignored: true
+
+# Installation
+install_script: scripts/install.sh
+
+# Dependencies
+requires:
+  - python3
+
+# Configuration
+env_template: .env.example
+
+# Entry point
+main: main.py
