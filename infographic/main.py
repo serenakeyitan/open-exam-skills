@@ -1,11 +1,10 @@
 """
-Infographic Skill - Generate visual infographics
+Infographic Skill - Generate visual infographics using Nano Banana Pro
 """
 
 import json
 import argparse
 import os
-from typing import List, Dict
 from pydantic import BaseModel
 from loguru import logger
 import sys
@@ -14,174 +13,128 @@ logger.remove()
 logger.add(sys.stderr, level="INFO")
 
 
-class InfographicData(BaseModel):
-    """Infographic data structure."""
+class InfographicStructure(BaseModel):
+    """Structured infographic content."""
     title: str
     subtitle: str
-    statistics: List[Dict[str, str]]  # {label, value, description}
-    key_points: List[str]
+    sections: list[dict]  # Each section has: title, content, visual_description
 
 
-def generate_with_ai(content: str, api_key: str, provider: str = "gemini") -> str:
-    """Generate infographic data using AI."""
-    prompt = f"""Extract key data for an infographic from this content.
+def analyze_content_with_ai(content: str, api_key: str) -> str:
+    """Analyze content and extract structured infographic data using Gemini."""
+    import google.generativeai as genai
 
-Content: {content[:10000]}
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-3-pro-preview")
 
-Create a visually-focused data structure with:
-- title: Main title
-- subtitle: Brief tagline
-- statistics: Array of {{label, value, description}} objects (4-6 key stats)
-- key_points: Array of bullet points (3-5 items)
+    prompt = f"""Analyze this content and create a structured infographic outline.
 
-Return as JSON:
+Content: {content[:15000]}
+
+Create a JSON structure with:
+- title: Main title (concise, impactful)
+- subtitle: Brief tagline describing the content
+- sections: Array of 4-6 sections, each with:
+  - title: Section heading
+  - content: Key points, statistics, or facts (2-4 bullet points)
+  - visual_description: Description of diagrams/illustrations to include
+
+Format for HORIZONTAL layout with multiple sections arranged left-to-right.
+
+Return ONLY valid JSON:
 {{
-  "title": "Quantum Computing Revolution",
-  "subtitle": "The Future of Computation",
-  "statistics": [
-    {{"label": "Processing Power", "value": "1000x", "description": "Faster than classical"}},
-    {{"label": "Qubits", "value": "100+", "description": "Current systems"}}
-  ],
-  "key_points": [
-    "Superposition enables parallel computation",
-    "Quantum gates manipulate qubits"
+  "title": "Main Title Here",
+  "subtitle": "Descriptive subtitle",
+  "sections": [
+    {{
+      "title": "Section 1 Name",
+      "content": ["Point 1", "Point 2", "Point 3"],
+      "visual_description": "Diagram showing..."
+    }}
   ]
 }}"""
 
-    if provider == "gemini":
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3-pro-preview")
-        response = model.generate_content(prompt)
-        return response.text
-    else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
-        from anthropic import Anthropic
-        client = Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}]
+    response = model.generate_content(prompt)
+    return response.text
+
+
+def generate_infographic_image(structure: InfographicStructure, content_summary: str, output_path: str, api_key: str) -> None:
+    """Generate infographic image using Nano Banana Pro (Gemini 3 Pro Image)."""
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+
+    # Build detailed prompt for horizontal infographic
+    sections_text = "\n\n".join([
+        f"SECTION: {section['title']}\n" +
+        "\n".join(f"- {point}" for point in section['content']) +
+        f"\nVisuals: {section['visual_description']}"
+        for section in structure.sections
+    ])
+
+    image_prompt = f"""Create a professional horizontal infographic with this exact structure:
+
+TITLE: {structure.title}
+SUBTITLE: {structure.subtitle}
+
+{sections_text}
+
+DESIGN REQUIREMENTS:
+- HORIZONTAL orientation (landscape, wide format like 1920x1080)
+- Main title at the very top, large and bold
+- Subtitle below title
+- {len(structure.sections)} distinct sections arranged LEFT TO RIGHT across the page
+- Each section should have:
+  * Clear section heading
+  * Professional illustrations/diagrams relevant to the content
+  * Key bullet points or statistics
+  * Color-coded or visually distinct boundaries
+- Modern, clean design with professional color scheme
+- Include relevant icons, diagrams, charts, and illustrations
+- Text should be clearly readable
+- Professional infographic style similar to scientific or educational materials
+- Balance of text and visual elements
+- Use boxes, arrows, and visual hierarchy to organize information
+
+Style: Professional, educational, modern, clean layout with illustrations"""
+
+    logger.info("Generating infographic with Nano Banana Pro...")
+
+    response = client.models.generate_content(
+        model="gemini-3-pro-image-preview",
+        contents=image_prompt,
+        config=types.GenerateContentConfig(
+            response_modalities=['IMAGE'],
         )
-        return response.content[0].text
+    )
 
+    # Extract and save image
+    for part in response.parts:
+        if image := part.as_image():
+            image.save(output_path)
+            logger.info(f"Infographic saved: {output_path}")
+            return
 
-def create_infographic_image(data: InfographicData, output_path: str, style: str = "modern") -> None:
-    """Create infographic image."""
-    from PIL import Image, ImageDraw, ImageFont
-
-    # Image dimensions
-    width, height = 1200, 1600
-    img = Image.new('RGB', (width, height), color='#1a1a2e')
-    draw = ImageDraw.Draw(img)
-
-    # Load fonts
-    try:
-        title_font = ImageFont.truetype("Arial.ttf", 60)
-        subtitle_font = ImageFont.truetype("Arial.ttf", 30)
-        stat_value_font = ImageFont.truetype("Arial.ttf", 48)
-        stat_label_font = ImageFont.truetype("Arial.ttf", 24)
-        body_font = ImageFont.truetype("Arial.ttf", 22)
-    except:
-        title_font = ImageFont.load_default()
-        subtitle_font = ImageFont.load_default()
-        stat_value_font = ImageFont.load_default()
-        stat_label_font = ImageFont.load_default()
-        body_font = ImageFont.load_default()
-
-    y_pos = 80
-
-    # Title
-    draw.text((width // 2, y_pos), data.title, fill='#00adb5', font=title_font, anchor="mm")
-    y_pos += 80
-
-    # Subtitle
-    draw.text((width // 2, y_pos), data.subtitle, fill='#eeeeee', font=subtitle_font, anchor="mm")
-    y_pos += 100
-
-    # Statistics (grid layout)
-    stat_width = width // 2 - 60
-    stat_height = 180
-    x_start = 40
-    y_start = y_pos
-
-    for i, stat in enumerate(data.statistics[:4]):  # Max 4 stats
-        row = i // 2
-        col = i % 2
-        x = x_start + col * (stat_width + 40)
-        y = y_start + row * (stat_height + 20)
-
-        # Stat box
-        draw.rectangle([x, y, x + stat_width, y + stat_height], fill='#16213e', outline='#00adb5', width=2)
-
-        # Value (large)
-        draw.text((x + stat_width // 2, y + 60), stat['value'], fill='#00adb5', font=stat_value_font, anchor="mm")
-
-        # Label
-        draw.text((x + stat_width // 2, y + 110), stat['label'], fill='#eeeeee', font=stat_label_font, anchor="mm")
-
-        # Description (small)
-        desc_lines = stat['description'][:30]
-        draw.text((x + stat_width // 2, y + 145), desc_lines, fill='#aaaaaa', font=ImageFont.load_default(), anchor="mm")
-
-    y_pos = y_start + ((len(data.statistics) + 1) // 2) * (stat_height + 20) + 60
-
-    # Key points
-    for point in data.key_points:
-        if y_pos > height - 100:
-            break
-
-        # Bullet point
-        draw.ellipse([60, y_pos, 75, y_pos + 15], fill='#00adb5')
-
-        # Text (wrap if too long)
-        text_lines = []
-        words = point.split()
-        line = ""
-        for word in words:
-            test_line = line + " " + word if line else word
-            if len(test_line) < 60:
-                line = test_line
-            else:
-                text_lines.append(line)
-                line = word
-        if line:
-            text_lines.append(line)
-
-        for line in text_lines[:2]:  # Max 2 lines per point
-            draw.text((100, y_pos), line, fill='#eeeeee', font=body_font)
-            y_pos += 35
-
-        y_pos += 20
-
-    # Save
-    img.save(output_path)
-    logger.info(f"Infographic saved: {output_path}")
+    raise ValueError("No image generated in response")
 
 
 def generate_infographic(
     content: str,
-    style: str = "modern",
     output_path: str = "infographic.png"
 ) -> str:
-    """Generate infographic from content."""
-    logger.info("Generating infographic...")
+    """Generate horizontal infographic from content using Nano Banana Pro."""
+    logger.info("Analyzing content for infographic structure...")
 
     # Get API key
     gemini_key = os.getenv("GEMINI_API_KEY", "")
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not gemini_key:
+        raise ValueError("GEMINI_API_KEY not found in environment")
 
-    if gemini_key:
-        response = generate_with_ai(content, gemini_key, "gemini")
-    elif anthropic_key:
-        response = generate_with_ai(content, anthropic_key, "anthropic")
-    else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
-        raise ValueError("No API key found")
+    # Step 1: Analyze content and extract structure
+    response = analyze_content_with_ai(content, gemini_key)
 
-    # Parse response
+    # Parse JSON response
     text = response.strip()
     if text.startswith("```json"):
         text = text[7:]
@@ -191,34 +144,48 @@ def generate_infographic(
         text = text[:-3]
 
     data = json.loads(text.strip())
-    infographic_data = InfographicData(**data)
+    structure = InfographicStructure(**data)
 
-    # Create image
-    create_infographic_image(infographic_data, output_path, style)
+    logger.info(f"Structure extracted: {structure.title}")
+    logger.info(f"Sections: {len(structure.sections)}")
+
+    # Step 2: Generate infographic image with Nano Banana Pro
+    generate_infographic_image(structure, content[:500], output_path, gemini_key)
 
     return output_path
 
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", "-i", required=True)
+    parser = argparse.ArgumentParser(description="Generate horizontal infographics using Nano Banana Pro")
+    parser.add_argument("--input", "-i")
     parser.add_argument("--output", "-o", default="infographic.png")
-    parser.add_argument("--style", "-s", default="modern")
     parser.add_argument("--test", action="store_true")
 
     args = parser.parse_args()
 
     if args.test:
-        content = "Quantum computing: 1000x faster processing. Current systems have 100+ qubits. Superposition enables parallel computation. Applications in cryptography and drug discovery."
-        result = generate_infographic(content, "modern", "test_infographic.png")
+        content = """Quantum Computing: The Next Revolution
+
+        Quantum computers use qubits instead of classical bits. Key concepts include:
+        - Superposition: qubits can be in multiple states simultaneously
+        - Entanglement: qubits can be correlated in quantum ways
+        - Quantum gates: operations that manipulate qubits
+
+        Current systems have 100+ qubits and are 1000x faster for certain tasks.
+        Applications include cryptography, drug discovery, optimization problems, and machine learning.
+
+        Major players: IBM, Google, Microsoft, Amazon are all investing heavily.
+        Challenges include error correction, maintaining coherence, and scaling up systems."""
+
+        result = generate_infographic(content, "test_infographic.png")
         print(f"Test infographic: {result}")
     else:
         if not args.input:
             parser.error("--input is required when not in test mode")
         with open(args.input) as f:
             content = f.read()
-        result = generate_infographic(content, args.style, args.output)
+        result = generate_infographic(content, args.output)
         print(f"Infographic generated: {result}")
 
 
