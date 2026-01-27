@@ -6,17 +6,47 @@ import json
 import argparse
 import os
 import time
+import ssl
+from pathlib import Path
 from pydantic import BaseModel
 from loguru import logger
 import sys
 
+# Load environment variables FIRST - before any other setup
+# This ensures .env is loaded whether the module is imported or run directly
+from dotenv import load_dotenv
+# Load .env from the same directory as this script
+script_dir = Path(__file__).parent
+env_path = script_dir / ".env"
+loaded = load_dotenv(dotenv_path=env_path)
+
 logger.remove()
 logger.add(sys.stderr, level="INFO")
+
+# Log environment loading status
+if loaded and env_path.exists():
+    logger.info(f"✓ Loaded environment from: {env_path}")
+elif env_path.exists():
+    logger.warning(f"⚠ .env file exists at {env_path} but may be empty")
+else:
+    logger.warning(f"⚠ No .env file found at: {env_path}")
 
 # API timeout settings
 ANALYZE_TIMEOUT = 60  # seconds for content analysis
 GENERATE_TIMEOUT = 120  # seconds for image generation
 MAX_RETRIES = 2  # number of retries for API calls
+
+# SSL verification - disable in sandbox/restricted environments
+VERIFY_SSL = os.getenv("VERIFY_SSL", "true").lower() != "false"
+
+# Configure SSL/gRPC for sandbox environments at module level
+if not VERIFY_SSL:
+    logger.warning("SSL verification disabled for sandbox environment")
+    # Disable SSL verification for gRPC connections
+    os.environ['GRPC_SSL_CIPHER_SUITES'] = 'HIGH'
+    # Allow insecure connections
+    import ssl as ssl_module
+    ssl_module._create_default_https_context = ssl_module._create_unverified_context
 
 
 class InfographicStructure(BaseModel):
@@ -107,10 +137,20 @@ def generate_infographic_image(structure: InfographicStructure, content_summary:
     """Generate infographic image using Nano Banana Pro (Gemini 3 Pro Image)."""
     from google import genai
     from google.genai import types
+    import httpx
 
     logger.info("Step 2/2: Generating infographic image with Nano Banana Pro...")
 
-    client = genai.Client(api_key=api_key)
+    # Create client with timeout and SSL configuration
+    http_options = {'timeout': GENERATE_TIMEOUT}
+    if not VERIFY_SSL:
+        # Create httpx client with SSL verification disabled
+        http_options['verify'] = False
+
+    client = genai.Client(
+        api_key=api_key,
+        http_options=http_options
+    )
 
     # Build detailed prompt for horizontal infographic
     sections_text = "\n\n".join([
@@ -160,7 +200,7 @@ STYLE:
 
 Remember: A professional infographic maker prioritizes visual storytelling over text. The visuals should convey the message; text only supports."""
 
-    logger.info(f"Requesting image generation (this may take 30-120 seconds)...")
+    logger.info(f"Requesting image generation (timeout: {GENERATE_TIMEOUT}s)...")
 
     last_error = None
     for attempt in range(MAX_RETRIES):
@@ -179,21 +219,37 @@ Remember: A professional infographic maker prioritizes visual storytelling over 
             )
 
             elapsed = time.time() - start_time
-            logger.info(f"Image generation completed in {elapsed:.1f}s")
+            logger.info(f"Image generation API call completed in {elapsed:.1f}s")
 
             # Extract and save image
             image_saved = False
-            for part in response.parts:
-                if image := part.as_image():
-                    image.save(output_path)
-                    file_size = os.path.getsize(output_path) / 1024  # KB
-                    logger.info(f"Infographic saved: {output_path} ({file_size:.1f} KB)")
-                    image_saved = True
-                    return
+            if hasattr(response, 'parts') and response.parts:
+                for part in response.parts:
+                    try:
+                        if image := part.as_image():
+                            image.save(output_path)
+                            file_size = os.path.getsize(output_path) / 1024  # KB
+                            logger.info(f"Infographic saved: {output_path} ({file_size:.1f} KB)")
+                            image_saved = True
+                            return
+                    except Exception as img_error:
+                        logger.warning(f"Failed to extract image from part: {img_error}")
+                        continue
 
             if not image_saved:
-                raise ValueError("No image generated in API response")
+                error_msg = "No image generated in API response"
+                if hasattr(response, 'text'):
+                    logger.warning(f"API returned text instead of image: {response.text[:200]}")
+                    error_msg += f" - Got text response: {response.text[:100]}"
+                raise ValueError(error_msg)
 
+        except httpx.TimeoutException as e:
+            last_error = e
+            logger.warning(f"Attempt {attempt + 1} timed out after {GENERATE_TIMEOUT}s")
+            if attempt < MAX_RETRIES - 1:
+                wait_time = (attempt + 1) * 3
+                logger.info(f"Waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
         except Exception as e:
             last_error = e
             logger.warning(f"Attempt {attempt + 1} failed: {type(e).__name__}: {str(e)}")
@@ -219,15 +275,24 @@ def generate_infographic(
         logger.info("INFOGRAPHIC GENERATION STARTED")
         logger.info("=" * 60)
 
-        # Get API key
+        # Get API key from environment
         gemini_key = os.getenv("GEMINI_API_KEY", "")
         if not gemini_key:
+            logger.error("=" * 60)
             logger.error("GEMINI_API_KEY not found in environment!")
-            logger.error("Please set it using one of these methods:")
-            logger.error("  1. Environment variable: export GEMINI_API_KEY='your_key'")
-            logger.error("  2. Create .env file with: GEMINI_API_KEY=your_key")
+            logger.error("=" * 60)
+            logger.error(f"Script directory: {script_dir}")
+            logger.error(f"Expected .env location: {env_path}")
+            logger.error(f".env file exists: {env_path.exists()}")
+            if env_path.exists():
+                logger.error(f".env file size: {env_path.stat().st_size} bytes")
+            logger.error("Please ensure .env file contains: GEMINI_API_KEY=your_key_here")
             logger.error("Get your API key at: https://aistudio.google.com/apikey")
-            raise ValueError("GEMINI_API_KEY not found in environment. See SETUP.md for instructions.")
+            logger.error("=" * 60)
+            raise ValueError("GEMINI_API_KEY not found in environment. Check .env file.")
+
+        # Log that API key was found (show first/last 4 chars for verification)
+        logger.info(f"✓ API key found: {gemini_key[:8]}...{gemini_key[-4:]}")
 
         logger.info(f"Content length: {len(content)} characters")
         logger.info(f"Output path: {output_path}")
@@ -341,6 +406,4 @@ def main():
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv()
     main()

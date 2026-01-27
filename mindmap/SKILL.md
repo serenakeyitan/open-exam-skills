@@ -1,74 +1,159 @@
 ---
 name: mindmap
-description: Generate interactive mind maps from research materials. This skill should be used when users want to visualize hierarchical concepts and relationships between ideas in their research.
+description: Convert Markdown to interactive mind maps using Markmap. Features smart collapse (first level only), PNG/SVG export, and click-to-prompt for discussion. Same UI/UX as markmap.js.org. Pure frontend.
 ---
 
 # Mind Map
 
-Extract hierarchical concepts from research materials and generate interactive mind maps with visual relationship mapping.
+Convert Markdown files to interactive HTML mind maps with enhanced features. Uses official Markmap frontend with custom controls.
 
-## When to Use This Skill
+## What This Skill Does
 
-Use this skill when:
-- Visualizing complex research topics and their relationships
-- Creating concept maps from documents
-- Organizing ideas hierarchically
-- Generating study aids or presentation materials
+**Input**: Markdown file with heading hierarchy (# ## ### ####)
+**Output**: Interactive HTML with enhanced features
 
-## How to Use
+This is a **pure converter** - no LLM required. Agent generates Markdown → this skill converts to interactive HTML.
 
-### Quick Test
+## Enhanced Features
 
-```bash
-cd mindmap
-python main.py --test
+### 1. Smart Default Collapse
+- Opens with **only first level visible** (minimalist view)
+- Users can manually expand nodes one-by-one
+- Reduces cognitive load on complex maps
+
+### 2. Export Functionality
+- **Export PNG** button: Export mindmap as high-quality PNG image
+- **Export SVG** button: Export mindmap as scalable SVG vector graphic
+- Both buttons located in top-right control panel
+- Downloads automatically to your default download folder
+
+### 3. Click-to-Discuss
+- Click any node's **text** (not the branch circle)
+- Generates discussion prompt: "讨论这些来源关于「[node title]」相关的内容"
+- Appears in bottom panel with:
+  - **Copy to Clipboard** button
+  - **Close** button
+- Clicking branch circles only expands/collapses (no prompt)
+
+### 4. Markmap Standard Features
+- Zoom with mouse wheel
+- Pan by dragging
+- Click circles to expand/collapse
+- Responsive design
+- Offline support (all assets embedded)
+
+## Workflow
+
+```
+1. Ask Claude: "Generate a mind map about X in Markdown format"
+2. Claude creates Markdown with # ## ### #### hierarchy
+3. Save to file (e.g., mindmap.md)
+4. Run: python main.py -i mindmap.md -o mindmap.html
+5. Open HTML → interact with enhanced mind map
 ```
 
-### Generate Mind Map
+## Usage
 
 ```bash
-python main.py --input research.txt --output mindmap.html
+python main.py --input mindmap.md --output mindmap.html
 ```
 
 Parameters:
-- `--input`: Path to research materials
-- `--output`: Output filename (default: mindmap.html)
-- `--format`: Format type - html or mermaid (default: html)
+- `--input`, `-i`: Input Markdown file (required)
+- `--output`, `-o`: Output HTML file (default: mindmap.html)
 
-### Python API
+## Example Markdown Format
 
-```python
-from main import generate_mindmap
+```markdown
+# Main Topic
 
-mindmap_path = generate_mindmap(
-    content="Your research...",
-    output_path="mindmap.html",
-    format="html"  # or "mermaid"
-)
+## First Branch
+
+### Subtopic 1.1
+
+#### Detail 1.1.1
+
+#### Detail 1.1.2
+
+### Subtopic 1.2
+
+## Second Branch
+
+### Subtopic 2.1
 ```
 
-## What Gets Generated
+## User Interactions
 
-- **HTML**: Interactive mind map with clickable nodes
-- **Mermaid**: Diagram markdown for documentation
+| Action | Behavior |
+|--------|----------|
+| Click "Export PNG" button | Downloads mindmap as PNG image |
+| Click "Export SVG" button | Downloads mindmap as SVG vector graphic |
+| Click node **text** | Shows discussion prompt at bottom |
+| Click node **circle** | Expands/collapses that branch only |
+| Mouse wheel | Zoom in/out |
+| Drag background | Pan the view |
+| Click "Copy" in prompt panel | Copies prompt to clipboard |
 
-## How It Works
+## Generated HTML Structure
 
-1. **Concept Extraction** - AI identifies key concepts and themes
-2. **Hierarchy Building** - Organizes concepts in parent-child relationships
-3. **Relationship Mapping** - Connects related ideas
-4. **Visualization** - Renders interactive or static output
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Markmap CSS/JS (embedded) -->
+  </head>
+  <body>
+    <!-- SVG mind map -->
+    <!-- Export buttons (top-right) -->
+    <!-- Prompt panel (bottom, hidden by default) -->
+    <!-- Custom JavaScript for features -->
+  </body>
+</html>
+```
 
-## Configuration
+## Technical Details
 
-Requires `.env` file with API keys (already configured).
+- **No LLM/AI**: Pure Markdown → HTML conversion
+- **No API Keys**: No external API calls
+- **Frontend**: Official Markmap library + custom enhancements
+- **Default State**: Collapsed to level 1
+- **Export**: PNG (via html2canvas) and SVG (native)
+- **Prompt Format**: Chinese template (customizable in code)
 
 ## Dependencies
 
+### Python
 ```bash
 pip install -r requirements.txt
 ```
+Only requires: `loguru` (logging)
 
-Key packages:
-- **google-generativeai** - Concept extraction
-- **graphviz** - Optional diagram generation
+### System
+- **Node.js/npx**: For markmap-cli
+- Auto-downloads on first use: `npx -y markmap-cli`
+
+## Customization
+
+To change the prompt format, edit `main.py` line 204:
+```python
+const prompt = `Discuss what these sources say about「${nodeText}`, in hte larger context of the upper node of the ${nodeText}`;
+```
+
+Replace with your preferred template, e.g.:
+```python
+const prompt = `Discuss content from sources about "${nodeText}"`;
+```
+
+## Integration with Agent
+
+When asking Agent to generate mind maps:
+1. Request heading-only format (# ## ### ####)
+2. No bullet points or numbered lists
+3. Keep headings concise (3-8 words)
+
+Then convert:
+```bash
+python main.py -i agent_output.md -o mindmap.html
+```
+
+Open `mindmap.html` in any browser for full interaction.
