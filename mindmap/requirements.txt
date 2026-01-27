@@ -3,5 +3,4 @@ anthropic==0.40.0
 pydantic==2.10.3
 python-dotenv==1.0.1
 loguru==0.7.2
-graphviz==0.20.3
-Pillow==11.0.0
+xmind==1.2.0
