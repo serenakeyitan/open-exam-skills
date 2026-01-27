@@ -51,7 +51,7 @@ If multiple tables are appropriate, return an array of tables."""
     if provider == "gemini":
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        model = genai.GenerativeModel("gemini-3-pro-preview")
         response = model.generate_content(prompt)
         return response.text
     else:
@@ -148,8 +148,6 @@ def extract_data_table(
     if isinstance(data, dict):
         table = DataTable(**data)
     else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
         # Multiple tables - use first one
         table = DataTable(**data[0])
         logger.info(f"Multiple tables found, using: {table.name}")
@@ -164,8 +162,6 @@ def extract_data_table(
     elif output_path.endswith('.json'):
         export_to_json(table, output_path)
     else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
         # Default to CSV
         csv_path = output_path + '.csv'
         export_to_csv(table, csv_path)

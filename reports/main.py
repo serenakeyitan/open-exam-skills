@@ -51,7 +51,7 @@ Return as JSON:
     if provider == "gemini":
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        model = genai.GenerativeModel("gemini-3-pro-preview")
         response = model.generate_content(prompt)
         return response.text
     else:
@@ -201,8 +201,6 @@ def generate_report(
     elif output_path.endswith('.docx'):
         export_to_docx(report, output_path)
     else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
         export_to_markdown(report, output_path)
 
     return output_path

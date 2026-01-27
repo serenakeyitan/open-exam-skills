@@ -51,7 +51,7 @@ Return as JSON:
     if provider == "gemini":
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        model = genai.GenerativeModel("gemini-3-pro-preview")
         response = model.generate_content(prompt)
         return response.text
     else:
@@ -144,8 +144,6 @@ def create_infographic_image(data: InfographicData, output_path: str, style: str
             if len(test_line) < 60:
                 line = test_line
             else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
                 text_lines.append(line)
                 line = word
         if line:

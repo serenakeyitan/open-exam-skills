@@ -58,7 +58,7 @@ Return as JSON array:
     if provider == "gemini":
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        model = genai.GenerativeModel("gemini-3-pro-preview")
         response = model.generate_content(prompt)
         return response.text
     else:
@@ -250,8 +250,6 @@ def export_to_html(questions: List[QuizQuestion], output_path: str) -> None:
             questions_html += '    </div>\n'
             questions_html += f'    <button onclick="checkAnswer({i}, \'{q.correct_answer}\')">Check Answer</button>\n'
         else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
             questions_html += f'    <p style="color: #7f8c8d;">Answer: {q.correct_answer}</p>\n'
 
         questions_html += f'    <div class="explanation"><strong>Explanation:</strong> {q.explanation}</div>\n'

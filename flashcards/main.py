@@ -47,7 +47,7 @@ Return as JSON array:
     if provider == "gemini":
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        model = genai.GenerativeModel("gemini-3-pro-preview")
         response = model.generate_content(prompt)
         return response.text
     else:
