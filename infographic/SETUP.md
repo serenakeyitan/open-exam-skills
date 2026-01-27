@@ -1,28 +1,45 @@
 # Infographic Skill Setup
 
-## Quick Setup (Required)
+## Quick Setup
 
-This skill requires a **Gemini API key** to generate infographics.
+**Good news!** If you're using the standalone package (`infographic_skill_standalone.zip`), the API keys are **already included** in the `.env` file. You can skip the API key setup and go straight to testing!
 
-### Option 1: Environment Variable (Recommended for Claude Sandbox)
+### Super Quick Start (Standalone Package)
 
-Set the environment variable before running:
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Test it (API key already configured!)
+python main.py --test
+
+# 3. Generate your infographic
+python main.py --input your_content.txt --output infographic.png
+```
+
+That's it! The `.env` file with API keys is already included.
+
+---
+
+## Manual API Key Setup (If Needed)
+
+If you cloned the repo or the `.env` file is missing, you'll need to set up the API key manually:
+
+### Option 1: Environment Variable (Claude Sandbox)
 
 ```bash
 export GEMINI_API_KEY="your_actual_gemini_api_key_here"
 python main.py --input your_content.txt --output infographic.png
 ```
 
-### Option 2: .env File (Recommended for Local)
-
-Create a `.env` file in the infographic directory:
+### Option 2: .env File (Local Development)
 
 ```bash
 echo "GEMINI_API_KEY=your_actual_gemini_api_key_here" > .env
 python main.py --input your_content.txt --output infographic.png
 ```
 
-## Getting a Gemini API Key
+### Getting Your Own API Key
 
 1. Go to: https://aistudio.google.com/apikey
 2. Click "Create API Key"
