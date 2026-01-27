@@ -1,0 +1,6 @@
+name: mindmap
+description: Generate interactive mind maps from research materials. Extract hierarchical concepts and visualize relationships.
+version: 1.0.0
+author: NotebookLM Skills Suite
+type: project
+gitignored: true

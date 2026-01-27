@@ -1,0 +1,6 @@
+name: infographic
+description: Create visual infographics from research data. Extract statistics and generate professional visualizations.
+version: 1.0.0
+author: NotebookLM Skills Suite
+type: project
+gitignored: true

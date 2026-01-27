@@ -1,0 +1,6 @@
+name: flashcards
+description: Generate study flashcards from research materials. Export to multiple formats including Anki.
+version: 1.0.0
+author: NotebookLM Skills Suite
+type: project
+gitignored: true

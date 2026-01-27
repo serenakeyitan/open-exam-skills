@@ -1,0 +1,21 @@
+# AI providers
+google-generativeai==0.8.3
+anthropic==0.40.0
+
+# Audio processing
+pydub==0.25.1
+google-cloud-texttospeech==2.17.2
+elevenlabs==1.9.0
+gTTS==2.5.4
+
+# Data validation and configuration
+pydantic==2.10.3
+python-dotenv==1.0.1
+
+# Utilities
+loguru==0.7.2
+requests==2.32.3
+typing-extensions==4.12.2
+
+# Audio file handling
+mutagen==1.47.0

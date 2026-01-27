@@ -1,0 +1,21 @@
+# AI providers
+google-generativeai==0.8.3
+anthropic==0.40.0
+
+# Video processing
+moviepy==1.0.3
+Pillow==11.0.0
+numpy==1.26.4
+
+# Audio (for narration)
+gTTS==2.5.4
+elevenlabs==1.9.0
+
+# Data validation and configuration
+pydantic==2.10.3
+python-dotenv==1.0.1
+
+# Utilities
+loguru==0.7.2
+requests==2.32.3
+typing-extensions==4.12.2

@@ -1,0 +1,6 @@
+name: quiz
+description: Generate quizzes with multiple question types from research materials. Includes answer keys and explanations.
+version: 1.0.0
+author: NotebookLM Skills Suite
+type: project
+gitignored: true

@@ -1,0 +1,6 @@
+name: reports
+description: Generate structured professional reports from research materials. Multiple formats and report types.
+version: 1.0.0
+author: NotebookLM Skills Suite
+type: project
+gitignored: true
