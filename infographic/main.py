@@ -222,7 +222,12 @@ def generate_infographic(
         # Get API key
         gemini_key = os.getenv("GEMINI_API_KEY", "")
         if not gemini_key:
-            raise ValueError("GEMINI_API_KEY not found in environment")
+            logger.error("GEMINI_API_KEY not found in environment!")
+            logger.error("Please set it using one of these methods:")
+            logger.error("  1. Environment variable: export GEMINI_API_KEY='your_key'")
+            logger.error("  2. Create .env file with: GEMINI_API_KEY=your_key")
+            logger.error("Get your API key at: https://aistudio.google.com/apikey")
+            raise ValueError("GEMINI_API_KEY not found in environment. See SETUP.md for instructions.")
 
         logger.info(f"Content length: {len(content)} characters")
         logger.info(f"Output path: {output_path}")
