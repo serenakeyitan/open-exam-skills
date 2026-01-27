@@ -32,23 +32,26 @@ def analyze_content_with_ai(content: str, api_key: str) -> str:
 Content: {content[:15000]}
 
 Create a JSON structure with:
-- title: Main title (concise, impactful)
-- subtitle: Brief tagline describing the content
-- sections: Array of 4-6 sections, each with:
-  - title: Section heading
-  - content: Key points, statistics, or facts (2-4 bullet points)
+- title: Main title (short, impactful, max 6 words)
+- subtitle: Brief tagline (max 10 words)
+- sections: Array of 4-5 sections, each with:
+  - title: Section heading (max 3 words)
+  - content: MINIMAL key points (1-2 SHORT bullet points max, each under 8 words)
   - visual_description: Description of diagrams/illustrations to include
+
+CRITICAL: Keep text MINIMAL. Professional infographics are 70% visual, 30% text.
+Focus on single key statistics, short phrases, not full sentences.
 
 Format for HORIZONTAL layout with multiple sections arranged left-to-right.
 
 Return ONLY valid JSON:
 {{
-  "title": "Main Title Here",
-  "subtitle": "Descriptive subtitle",
+  "title": "Main Title",
+  "subtitle": "Brief tagline",
   "sections": [
     {{
-      "title": "Section 1 Name",
-      "content": ["Point 1", "Point 2", "Point 3"],
+      "title": "Section Name",
+      "content": ["Short point 1", "Key stat 2"],
       "visual_description": "Diagram showing..."
     }}
   ]
@@ -73,31 +76,45 @@ def generate_infographic_image(structure: InfographicStructure, content_summary:
         for section in structure.sections
     ])
 
-    image_prompt = f"""Create a professional horizontal infographic with this exact structure:
+    image_prompt = f"""Create a professional horizontal infographic with minimal text and maximum visual impact:
 
 TITLE: {structure.title}
 SUBTITLE: {structure.subtitle}
 
 {sections_text}
 
-DESIGN REQUIREMENTS:
-- HORIZONTAL orientation (landscape, wide format like 1920x1080)
-- Main title at the very top, large and bold
-- Subtitle below title
-- {len(structure.sections)} distinct sections arranged LEFT TO RIGHT across the page
-- Each section should have:
-  * Clear section heading
-  * Professional illustrations/diagrams relevant to the content
-  * Key bullet points or statistics
-  * Color-coded or visually distinct boundaries
-- Modern, clean design with professional color scheme
-- Include relevant icons, diagrams, charts, and illustrations
-- Text should be clearly readable
-- Professional infographic style similar to scientific or educational materials
-- Balance of text and visual elements
-- Use boxes, arrows, and visual hierarchy to organize information
+CRITICAL DESIGN REQUIREMENTS (Professional Infographic Standards):
 
-Style: Professional, educational, modern, clean layout with illustrations"""
+LAYOUT:
+- HORIZONTAL orientation (landscape, wide format like 1920x1080)
+- Main title at top (LARGE, BOLD)
+- Subtitle below (smaller, concise)
+- {len(structure.sections)} distinct sections arranged LEFT TO RIGHT
+
+TEXT RULES (MINIMAL TEXT - CRITICAL):
+- Use VERY FEW words - only essential information
+- Large, bold section headings
+- 1-2 SHORT bullet points per section maximum
+- Statistics/numbers should be LARGE and prominent
+- More white space, less crowding
+- 70% VISUALS, 30% TEXT
+
+VISUAL ELEMENTS (PRIMARY FOCUS):
+- LARGE professional diagrams and illustrations dominate each section
+- Icons, charts, visual metaphors
+- Color-coded sections with clear visual boundaries
+- Use arrows, flowcharts, process diagrams
+- Professional scientific/educational illustration style
+- Each section should be primarily visual with minimal supporting text
+
+STYLE:
+- Clean, modern, professional
+- Educational/scientific aesthetic
+- Strong visual hierarchy
+- Generous spacing between elements
+- Bold color scheme for section distinction
+
+Remember: A professional infographic maker prioritizes visual storytelling over text. The visuals should convey the message; text only supports."""
 
     logger.info("Generating infographic with Nano Banana Pro...")
 
