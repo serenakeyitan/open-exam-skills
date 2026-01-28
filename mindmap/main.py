@@ -133,7 +133,7 @@ def inject_custom_features(html_path: str) -> None:
 
 <div id="control-panel">
   <button id="export-png-btn">Export PNG</button>
-  <button id="export-svg-btn">Export SVG</button>
+  <button id="export-html-btn">Export HTML</button>
 </div>
 
 <div id="prompt-display">
@@ -145,18 +145,29 @@ def inject_custom_features(html_path: str) -> None:
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 (function() {
-  // Wait for markmap to be ready
-  setTimeout(function() {
-    const mm = window.markmap;
-    if (!mm || !mm.mm) {
-      console.error('Markmap not found');
-      return;
+  // Set up export functions immediately - they'll wait for dependencies when called
+  const mm = window.markmap;
+
+    function collectInlineStyles() {
+      const styles = [];
+      document.querySelectorAll('style').forEach(style => {
+        if (style.textContent) {
+          styles.push(style.textContent);
+        }
+      });
+      return styles.join('\\n');
     }
 
-    const markmapInstance = mm.mm;
+    function downloadDataUrl(dataUrl, filename) {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
     // Collapse to first level only on load
     function collapseToFirstLevel() {
@@ -180,15 +191,28 @@ def inject_custom_features(html_path: str) -> None:
         }
       });
 
-      // Force redraw
-      if (markmapInstance.svg) {
-        markmapInstance.fit();
+      // Force redraw if markmap instance is available
+      if (mm && mm.Markmap) {
+        const svg = document.querySelector('svg');
+        if (svg && svg.__markmap) {
+          svg.__markmap.fit();
+        }
       }
     }
 
-    // Export as PNG
+    function svgToDataUrl(svgString) {
+      const encoded = btoa(unescape(encodeURIComponent(svgString)));
+      return `data:image/svg+xml;base64,${encoded}`;
+    }
+
+    // Export as PNG - Render SVG to canvas
     async function exportPNG() {
       const btn = document.getElementById('export-png-btn');
+      if (!btn) {
+        console.error('Export PNG button not found');
+        return;
+      }
+      
       const originalText = btn.textContent;
       btn.disabled = true;
       btn.textContent = 'Exporting...';
@@ -196,34 +220,83 @@ def inject_custom_features(html_path: str) -> None:
       try {
         const svg = document.querySelector('svg');
         if (!svg) {
-          throw new Error('SVG not found');
+          throw new Error('SVG not found. Please wait for the mindmap to load.');
         }
 
-        // Get the SVG container
-        const svgContainer = svg.parentElement;
-        if (!svgContainer) {
-          throw new Error('SVG container not found');
+        const clonedSvg = svg.cloneNode(true);
+        const inlineStyles = collectInlineStyles();
+        if (inlineStyles) {
+          const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+          styleEl.textContent = inlineStyles;
+          clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
         }
 
-        // Use html2canvas to capture the SVG
-        const canvas = await html2canvas(svgContainer, {
-          backgroundColor: '#ffffff',
-          useCORS: true,
-          scale: 2, // Higher quality
-          logging: false
+        let bbox;
+        try {
+          bbox = svg.getBBox();
+        } catch (e) {
+          const viewBox = svg.getAttribute('viewBox');
+          if (viewBox) {
+            const parts = viewBox.split(/\\s+/);
+            bbox = {
+              x: parseFloat(parts[0]) || 0,
+              y: parseFloat(parts[1]) || 0,
+              width: parseFloat(parts[2]) || svg.clientWidth || 800,
+              height: parseFloat(parts[3]) || svg.clientHeight || 600
+            };
+          } else {
+            bbox = {
+              x: 0,
+              y: 0,
+              width: svg.clientWidth || 800,
+              height: svg.clientHeight || 600
+            };
+          }
+        }
+
+        clonedSvg.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+        clonedSvg.setAttribute('width', bbox.width);
+        clonedSvg.setAttribute('height', bbox.height);
+        if (!clonedSvg.getAttribute('xmlns')) {
+          clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        }
+        if (!clonedSvg.getAttribute('xmlns:xlink')) {
+          clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        }
+
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(clonedSvg);
+        const svgDataUrl = svgToDataUrl(svgString);
+
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = () => reject(new Error('Failed to load SVG image'));
+          img.src = svgDataUrl;
         });
 
-        // Convert to blob and download
-        canvas.toBlob(function(blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = 'mindmap.png';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }, 'image/png');
+        const scale = 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(bbox.width * scale);
+        canvas.height = Math.ceil(bbox.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, bbox.width, bbox.height);
+
+        let dataUrl;
+        try {
+          dataUrl = canvas.toDataURL('image/png');
+        } catch (canvasError) {
+          const msg = String(canvasError || '');
+          if (msg.toLowerCase().includes('insecure')) {
+            throw new Error('PNG export blocked by browser security. Please open the HTML via a local web server (e.g. python -m http.server) and try again.');
+          }
+          throw canvasError;
+        }
+
+        downloadDataUrl(dataUrl, 'mindmap.png');
 
         btn.textContent = 'Exported!';
         setTimeout(function() {
@@ -232,6 +305,8 @@ def inject_custom_features(html_path: str) -> None:
         }, 2000);
       } catch (error) {
         console.error('PNG export error:', error);
+        const errorMsg = error && error.message ? error.message : (typeof error === 'string' ? error : 'Unknown error occurred');
+        alert('Export failed: ' + errorMsg);
         btn.textContent = 'Error';
         setTimeout(function() {
           btn.textContent = originalText;
@@ -240,46 +315,22 @@ def inject_custom_features(html_path: str) -> None:
       }
     }
 
-    // Export as SVG
-    function exportSVG() {
-      const btn = document.getElementById('export-svg-btn');
+    // Export as HTML - Save current page as HTML file
+    function exportHTML() {
+      const btn = document.getElementById('export-html-btn');
+      if (!btn) {
+        console.error('Export HTML button not found');
+        return;
+      }
+      
       const originalText = btn.textContent;
       btn.disabled = true;
       btn.textContent = 'Exporting...';
 
       try {
-        const svg = document.querySelector('svg');
-        if (!svg) {
-          throw new Error('SVG not found');
-        }
-
-        // Clone the SVG to avoid modifying the original
-        const clonedSvg = svg.cloneNode(true);
-        
-        // Get bounding box to set proper viewBox
-        const bbox = svg.getBBox();
-        clonedSvg.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
-        clonedSvg.setAttribute('width', bbox.width);
-        clonedSvg.setAttribute('height', bbox.height);
-        clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-
-        // Serialize SVG
-        const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(clonedSvg);
-        
-        // Add XML declaration
-        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
-        
-        // Download
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'mindmap.svg';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        const html = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
+        const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+        downloadDataUrl(dataUrl, 'mindmap.html');
 
         btn.textContent = 'Exported!';
         setTimeout(function() {
@@ -287,7 +338,9 @@ def inject_custom_features(html_path: str) -> None:
           btn.disabled = false;
         }, 2000);
       } catch (error) {
-        console.error('SVG export error:', error);
+        console.error('HTML export error:', error);
+        const errorMsg = error && error.message ? error.message : (typeof error === 'string' ? error : 'Unknown error occurred');
+        alert('Export failed: ' + errorMsg);
         btn.textContent = 'Error';
         setTimeout(function() {
           btn.textContent = originalText;
@@ -296,9 +349,28 @@ def inject_custom_features(html_path: str) -> None:
       }
     }
 
-    // Add click handlers for export buttons
-    document.getElementById('export-png-btn').addEventListener('click', exportPNG);
-    document.getElementById('export-svg-btn').addEventListener('click', exportSVG);
+    // Add click handlers for export buttons - attach immediately
+    function attachExportHandlers() {
+      const pngBtn = document.getElementById('export-png-btn');
+      const htmlBtn = document.getElementById('export-html-btn');
+      
+      if (pngBtn && !pngBtn.dataset.listenerAttached) {
+        pngBtn.addEventListener('click', exportPNG);
+        pngBtn.dataset.listenerAttached = 'true';
+      }
+      
+      if (htmlBtn && !htmlBtn.dataset.listenerAttached) {
+        htmlBtn.addEventListener('click', exportHTML);
+        htmlBtn.dataset.listenerAttached = 'true';
+      }
+    }
+    
+    // Try to attach immediately
+    attachExportHandlers();
+    
+    // Also try after a short delay in case buttons aren't ready yet
+    setTimeout(attachExportHandlers, 100);
+    setTimeout(attachExportHandlers, 500);
 
     // Node click handler to show prompt
     const promptDisplay = document.getElementById('prompt-display');
@@ -356,11 +428,18 @@ def inject_custom_features(html_path: str) -> None:
       });
     }, 500);
 
-    // Initial collapse to first level
-    setTimeout(collapseToFirstLevel, 100);
+    // Initial collapse to first level - wait for SVG to be ready
+    function tryCollapse() {
+      const svg = document.querySelector('svg');
+      if (svg) {
+        collapseToFirstLevel();
+      } else {
+        setTimeout(tryCollapse, 100);
+      }
+    }
+    setTimeout(tryCollapse, 100);
 
-  }, 500);
-})();
+})(); // End of IIFE
 </script>
 """
 
@@ -473,7 +552,7 @@ def main():
             print(f"✓ Open in browser: file://{os.path.abspath(result)}")
             print()
             print("Features:")
-            print("  • Export as PNG or SVG using buttons in top-right")
+            print("  • Export as PNG or HTML using buttons in top-right")
             print("  • Click node text to generate discussion prompt")
             print("  • Click branch circles to expand/collapse")
         else:

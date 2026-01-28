@@ -1,0 +1,70 @@
+{
+  "title": "Biology Fundamentals Quiz",
+  "questions": [
+    {
+      "question": "What is the powerhouse of the cell?",
+      "options": [
+        "Nucleus",
+        "Mitochondria",
+        "Ribosome",
+        "Golgi apparatus"
+      ],
+      "correctIndex": 1,
+      "hint": "It's responsible for ATP production and cellular respiration",
+      "correctExplanation": "Mitochondria are the powerhouses of the cell, generating ATP through cellular respiration. They have their own DNA and double membrane structure.",
+      "wrongExplanation": "The correct answer is mitochondria. They produce energy in the form of ATP through the process of cellular respiration."
+    },
+    {
+      "question": "What is photosynthesis?",
+      "options": [
+        "Breaking down glucose for energy",
+        "Converting light energy into chemical energy",
+        "Cell division process",
+        "Protein synthesis in ribosomes"
+      ],
+      "correctIndex": 1,
+      "hint": "It involves sunlight, chlorophyll, and occurs in plants",
+      "correctExplanation": "Photosynthesis is the process by which plants convert light energy (usually from the sun) into chemical energy stored in glucose molecules.",
+      "wrongExplanation": "Photosynthesis is actually the process of converting light energy into chemical energy, not breaking down molecules."
+    },
+    {
+      "question": "Which structure contains the genetic material in eukaryotic cells?",
+      "options": [
+        "Cell wall",
+        "Cytoplasm",
+        "Nucleus",
+        "Chloroplast"
+      ],
+      "correctIndex": 2,
+      "hint": "It's often called the control center of the cell",
+      "correctExplanation": "The nucleus contains the cell's DNA and is responsible for controlling cellular activities and gene expression.",
+      "wrongExplanation": "The nucleus is the correct answer - it houses the cell's chromosomes and genetic material."
+    },
+    {
+      "question": "What is the basic unit of life?",
+      "options": [
+        "Atom",
+        "Molecule",
+        "Cell",
+        "Tissue"
+      ],
+      "correctIndex": 2,
+      "hint": "All living organisms are made up of one or more of these",
+      "correctExplanation": "The cell is the basic structural and functional unit of all living organisms.",
+      "wrongExplanation": "While atoms and molecules are important, the cell is the smallest unit that can carry out all life processes."
+    },
+    {
+      "question": "What process do cells use to divide and create two identical daughter cells?",
+      "options": [
+        "Meiosis",
+        "Mitosis",
+        "Osmosis",
+        "Diffusion"
+      ],
+      "correctIndex": 1,
+      "hint": "This process is used for growth and repair in somatic cells",
+      "correctExplanation": "Mitosis is the process of cell division that produces two genetically identical daughter cells from a single parent cell.",
+      "wrongExplanation": "Meiosis produces gametes (sex cells) with half the chromosomes, while mitosis creates identical copies."
+    }
+  ]
+}

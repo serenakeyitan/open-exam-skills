@@ -1,6 +1,6 @@
 ---
 name: mindmap
-description: Convert Markdown to interactive mind maps using Markmap. Features smart collapse (first level only), PNG/SVG export, and click-to-prompt for discussion. Same UI/UX as markmap.js.org. Pure frontend.
+description: Convert Markdown to interactive mind maps using Markmap. Features smart collapse (first level only), PNG/HTML export, and click-to-prompt for discussion. Same UI/UX as markmap.js.org. Pure frontend.
 ---
 
 # Mind Map
@@ -23,7 +23,7 @@ This is a **pure converter** - no LLM required. Agent generates Markdown → thi
 
 ### 2. Export Functionality
 - **Export PNG** button: Export mindmap as high-quality PNG image
-- **Export SVG** button: Export mindmap as scalable SVG vector graphic
+- **Export HTML** button: Export the current page as a standalone HTML file
 - Both buttons located in top-right control panel
 - Downloads automatically to your default download folder
 
@@ -87,7 +87,7 @@ Parameters:
 | Action | Behavior |
 |--------|----------|
 | Click "Export PNG" button | Downloads mindmap as PNG image |
-| Click "Export SVG" button | Downloads mindmap as SVG vector graphic |
+| Click "Export HTML" button | Downloads current mindmap page as HTML |
 | Click node **text** | Shows discussion prompt at bottom |
 | Click node **circle** | Expands/collapses that branch only |
 | Mouse wheel | Zoom in/out |
@@ -117,7 +117,7 @@ Parameters:
 - **No API Keys**: No external API calls
 - **Frontend**: Official Markmap library + custom enhancements
 - **Default State**: Collapsed to level 1
-- **Export**: PNG (via html2canvas) and SVG (native)
+- **Export**: PNG (SVG render via canvg) and HTML (full page)
 - **Prompt Format**: Chinese template (customizable in code)
 
 ## Dependencies

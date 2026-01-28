@@ -1,19 +1,13 @@
 name: quiz
-description: 
+description: Convert JSON quiz to NotebookLM-style interactive HTML. Features multiple choice (A/B/C/D), answer feedback, hints, completion stats, and review mode. Pure frontend - AI generates JSON, this renders the UI.
 version: 1.0.0
 author: NotebookLM Skills Suite
 type: project
 gitignored: true
 
-# Installation
-install_script: scripts/install.sh
-
 # Dependencies
 requires:
   - python3
-
-# Configuration
-env_template: .env.example
 
 # Entry point
 main: main.py

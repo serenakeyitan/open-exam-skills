@@ -33,7 +33,7 @@ else:
 
 # API timeout settings
 ANALYZE_TIMEOUT = 60  # seconds for content analysis
-GENERATE_TIMEOUT = 120  # seconds for image generation
+GENERATE_TIMEOUT = 300  # seconds for image generation (increased for large images)
 MAX_RETRIES = 2  # number of retries for API calls
 
 # SSL verification - disable in sandbox/restricted environments
@@ -141,15 +141,10 @@ def generate_infographic_image(structure: InfographicStructure, content_summary:
 
     logger.info("Step 2/2: Generating infographic image with Nano Banana Pro...")
 
-    # Create client with timeout and SSL configuration
-    http_options = {'timeout': GENERATE_TIMEOUT}
-    if not VERIFY_SSL:
-        # Create httpx client with SSL verification disabled
-        http_options['verify'] = False
-
+    # Create client - timeout is handled by the API call itself
+    # SSL verification is handled at module level via ssl context
     client = genai.Client(
-        api_key=api_key,
-        http_options=http_options
+        api_key=api_key
     )
 
     # Build detailed prompt for horizontal infographic
@@ -214,7 +209,7 @@ Remember: A professional infographic maker prioritizes visual storytelling over 
                 model="gemini-3-pro-image-preview",
                 contents=image_prompt,
                 config=types.GenerateContentConfig(
-                    response_modalities=['IMAGE'],
+                    response_modalities=['IMAGE']
                 )
             )
 

@@ -1,12 +1,11 @@
 """
-Quiz Skill - Generate quizzes from research
+Quiz Skill - Convert JSON quiz to interactive HTML
+Pure frontend converter - no AI/LLM required
 """
 
 import json
 import argparse
-import os
-from typing import List
-from pydantic import BaseModel
+from pathlib import Path
 from loguru import logger
 import sys
 
@@ -14,333 +13,738 @@ logger.remove()
 logger.add(sys.stderr, level="INFO")
 
 
-class QuizQuestion(BaseModel):
-    """A quiz question."""
-    type: str  # multiple_choice, true_false, short_answer
-    question: str
-    options: List[str] = []  # For multiple choice
-    correct_answer: str
-    explanation: str
-    difficulty: str = "medium"
+def load_quiz_data(json_path: str) -> dict:
+    """Load quiz data from JSON file."""
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # Handle both array format and object format
+    if isinstance(data, list):
+        return {
+            "title": "Quiz",
+            "questions": data
+        }
+    return data
 
 
-def generate_with_ai(content: str, num_questions: int, difficulty: str, api_key: str, provider: str = "gemini") -> str:
-    """Generate quiz using AI."""
-    prompt = f"""Create a {difficulty} quiz with {num_questions} questions from this content.
+def generate_html(quiz_data: dict) -> str:
+    """Generate interactive quiz HTML."""
 
-Content: {content[:10000]}
+    title = quiz_data.get("title", "Quiz")
+    questions = quiz_data.get("questions", [])
+    total_questions = len(questions)
 
-Generate a mix of question types:
-- multiple_choice: Question with 4 options
-- true_false: Yes/no questions
-- short_answer: Brief answer questions
+    # Convert questions to JSON string for embedding
+    questions_json = json.dumps(questions, ensure_ascii=False)
 
-Return as JSON array:
-[
-  {{
-    "type": "multiple_choice",
-    "question": "What is quantum superposition?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correct_answer": "Option B",
-    "explanation": "Superposition means...",
-    "difficulty": "{difficulty}"
-  }},
-  {{
-    "type": "true_false",
-    "question": "Qubits can only be 0 or 1",
-    "options": ["True", "False"],
-    "correct_answer": "False",
-    "explanation": "Qubits can be in superposition...",
-    "difficulty": "{difficulty}"
-  }}
-]"""
-
-    if provider == "gemini":
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3-pro-preview")
-        response = model.generate_content(prompt)
-        return response.text
-    else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
-        from anthropic import Anthropic
-        client = Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=8192,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.content[0].text
-
-
-def export_to_html(questions: List[QuizQuestion], output_path: str) -> None:
-    """Export quiz as interactive HTML."""
-    html_template = """
-<!DOCTYPE html>
-<html>
+    html = f"""<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Quiz</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
     <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
         body {{
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px 16px 32px;
         }}
-        h1 {{
-            text-align: center;
-            color: #2c3e50;
-        }}
-        .question {{
+
+        .quiz-container {{
             background: white;
-            padding: 30px;
-            margin: 20px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: none;
+            max-width: 520px;
+            width: 100%;
+            padding: 18px 16px 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 640px;
         }}
+
+        .quiz-header {{
+            text-align: left;
+            margin-bottom: 16px;
+        }}
+
+        .quiz-title {{
+            font-size: 22px;
+            font-weight: 600;
+            color: #232323;
+            margin-bottom: 4px;
+        }}
+
+        .quiz-subtitle {{
+            font-size: 13px;
+            color: #9d9d9d;
+        }}
+
+        .progress-text {{
+            text-align: left;
+            font-size: 13px;
+            color: #9d9d9d;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }}
+
         .question-text {{
-            font-size: 18px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #2a2a2a;
+            margin-bottom: 16px;
+            line-height: 1.5;
         }}
+
         .options {{
-            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 4px;
         }}
+
+        .options::-webkit-scrollbar {{
+            width: 6px;
+        }}
+
+        .options::-webkit-scrollbar-track {{
+            background: #f0f0f0;
+            border-radius: 3px;
+        }}
+
+        .options::-webkit-scrollbar-thumb {{
+            background: #c0c0c0;
+            border-radius: 3px;
+        }}
+
+        .options::-webkit-scrollbar-thumb:hover {{
+            background: #a0a0a0;
+        }}
+
         .option {{
-            padding: 12px;
-            margin: 8px 0;
-            background: #ecf0f1;
-            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border: 1px solid #f0f0f0;
+            border-radius: 12px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            background: #f8f8f8;
         }}
-        .option:hover {{
-            background: #d5dbdb;
+
+        .option:hover:not(.selected):not(.disabled) {{
+            border-color: #e6e6e6;
+            background: #f6f6f6;
         }}
+
         .option.selected {{
-            background: #3498db;
+            border-color: #d0d0d0;
+            background: #dedede;
+        }}
+
+        .option.correct,
+        .option.wrong {{
+            border-color: #f0f0f0;
+            background: #f8f8f8;
+        }}
+
+        .option.disabled {{
+            cursor: default;
+        }}
+
+        .option-label {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            margin-right: 10px;
+            flex-shrink: 0;
+            color: #9d9d9d;
+            width: 22px;
+        }}
+
+        .option.selected .option-label {{
+            color: #3a3a3a;
+        }}
+
+        .option.disabled .option-text {{
+            color: #bdbdbd;
+        }}
+
+        .option.disabled .option-label {{
+            color: #bdbdbd;
+        }}
+
+        .option-text {{
+            flex: 1;
+            font-size: 15px;
+            color: #3a3a3a;
+        }}
+
+
+        .feedback-card {{
+            padding: 14px 16px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }}
+
+        .feedback-card.show {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+
+        .feedback-card.correct {{
+            background: #bfeacb;
+        }}
+
+        .feedback-card.wrong {{
+            background: #fff7f7;
+        }}
+
+        .feedback-header {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }}
+
+        .feedback-header.correct {{
+            color: #697b6e;
+        }}
+
+        .feedback-header.wrong {{
+            color: #a42d22;
+        }}
+
+        .feedback-icon {{
+            font-size: 16px;
+            font-weight: 600;
+        }}
+
+        .feedback-answer {{
+            font-size: 15px;
+            color: #2a2a2a;
+        }}
+
+        .feedback-text {{
+            font-size: 13px;
+            line-height: 1.5;
+        }}
+
+        .feedback-card.correct .feedback-text {{
+            color: #444443;
+        }}
+
+        .feedback-card.wrong .feedback-text {{
+            color: #2e2e2f;
+        }}
+
+        .buttons {{
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 24px;
+            min-height: 52px;
+        }}
+
+        .btn {{
+            padding: 10px 22px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }}
+
+        .btn-secondary {{
+            background: #ffffff;
+            color: #6b7280;
+            border: 1px solid #e2e2e2;
+        }}
+
+        .btn-secondary:hover:not(:disabled) {{
+            background: #e5e5e5;
+        }}
+
+        .btn-secondary:disabled {{
+            opacity: 0.4;
+            cursor: not-allowed;
+        }}
+
+        .btn-primary {{
+            background: #424cf7;
             color: white;
         }}
-        .option.correct {{
-            background: #2ecc71;
-            color: white;
+
+        .btn-primary:hover:not(:disabled) {{
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(66, 76, 247, 0.25);
         }}
-        .option.incorrect {{
-            background: #e74c3c;
-            color: white;
+
+        .btn-primary:disabled {{
+            opacity: 0.4;
+            cursor: not-allowed;
         }}
-        .explanation {{
-            margin-top: 15px;
-            padding: 15px;
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            border-radius: 4px;
+
+
+        .completion-container {{
+            text-align: center;
             display: none;
         }}
-        .explanation.show {{
+
+        .completion-container.show {{
             display: block;
         }}
-        button {{
-            padding: 12px 24px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+
+        .completion-icon {{
+            font-size: 64px;
+            margin-bottom: 20px;
+        }}
+
+        .completion-title {{
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }}
+
+        .completion-subtitle {{
             font-size: 16px;
-            margin-top: 10px;
+            color: #666;
+            margin-bottom: 30px;
         }}
-        button:hover {{
-            background: #2980b9;
+
+        .stats-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
         }}
-        .score {{
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin: 30px 0;
+
+        .stat-card {{
+            background: #f8f9ff;
             padding: 20px;
-            background: white;
-            border-radius: 8px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }}
+
+        .stat-label {{
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }}
+
+        .stat-value {{
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }}
+
+        .stat-card.score {{
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }}
+
+        .stat-card.score .stat-label {{
+            color: rgba(255, 255, 255, 0.9);
+        }}
+
+        .stat-card.score .stat-value {{
+            color: white;
+        }}
+
+        .completion-buttons {{
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }}
+
+        .hint-toggle {{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4e4e4e;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }}
+
+        .hint-toggle .chevron {{
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }}
+
+        .hint-toggle.open .chevron {{
+            transform: rotate(180deg);
+        }}
+
+        .hint-panel {{
+            padding: 12px 14px;
+            background: #ebecf8;
+            border-radius: 12px;
+            display: none;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }}
+
+        .hint-panel.show {{
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }}
+
+        .hint-title {{
+            font-weight: 600;
+            font-size: 13px;
+            color: #4e4e4e;
+            margin-bottom: 6px;
+        }}
+
+        .hint-text {{
+            font-size: 13px;
+            color: #474749;
+            line-height: 1.5;
+        }}
+
+        .hint-slot {{
+            min-height: 72px;
+        }}
+
+        .quiz-footer {{
+            margin-top: auto;
+        }}
+
+        .question-container {{
             display: none;
         }}
+
+        .question-container.active {{
+            display: block;
+        }}
     </style>
-    <script>
-        let answers = {{}};
-
-        function selectOption(questionId, option) {{
-            answers[questionId] = option;
-
-            // Update UI
-            const questionDiv = document.getElementById('q' + questionId);
-            const options = questionDiv.querySelectorAll('.option');
-            options.forEach(opt => {{
-                opt.classList.remove('selected');
-                if (opt.textContent.includes(option)) {{
-                    opt.classList.add('selected');
-                }}
-            }});
-        }}
-
-        function checkAnswer(questionId, correctAnswer) {{
-            const userAnswer = answers[questionId];
-            const questionDiv = document.getElementById('q' + questionId);
-            const options = questionDiv.querySelectorAll('.option');
-            const explanation = questionDiv.querySelector('.explanation');
-
-            options.forEach(opt => {{
-                opt.style.pointerEvents = 'none';
-                const optText = opt.textContent.trim();
-                if (optText.includes(correctAnswer)) {{
-                    opt.classList.add('correct');
-                }}
-                if (userAnswer && optText.includes(userAnswer) && userAnswer !== correctAnswer) {{
-                    opt.classList.add('incorrect');
-                }}
-            }});
-
-            explanation.classList.add('show');
-        }}
-
-        function submitQuiz() {{
-            const totalQuestions = {num_questions};
-            let correct = 0;
-
-            // Check all answers
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(button => {{
-                if (button.textContent === 'Check Answer') {{
-                    button.click();
-                }}
-            }});
-
-            // Calculate score (would need more sophisticated tracking)
-            document.getElementById('score').style.display = 'block';
-            document.getElementById('score').innerHTML = 'Quiz Complete! Review your answers above.';
-        }}
-    </script>
 </head>
 <body>
-    <h1>Quiz</h1>
-    <p style="text-align: center; color: #7f8c8d;">Test your knowledge</p>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <div class="quiz-title">{title}</div>
+            <div class="quiz-subtitle">Based on 1 source</div>
+        </div>
 
-    {questions_html}
+        <div id="quiz-content">
+            <!-- Questions will be rendered here -->
+        </div>
 
-    <div style="text-align: center; margin: 30px 0;">
-        <button onclick="submitQuiz()" style="font-size: 18px;">Submit Quiz</button>
+        <div id="completion-screen" class="completion-container">
+            <div class="completion-icon">🎉</div>
+            <div class="completion-title">You did it! Quiz Complete.</div>
+            <div class="completion-subtitle">Here's how you performed</div>
+
+            <div class="stats-grid">
+                <div class="stat-card score">
+                    <div class="stat-label">Score</div>
+                    <div class="stat-value" id="score-value">0/{total_questions}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Accuracy</div>
+                    <div class="stat-value" id="accuracy-value">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Right</div>
+                    <div class="stat-value" id="right-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Wrong</div>
+                    <div class="stat-value" id="wrong-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Skipped</div>
+                    <div class="stat-value" id="skipped-value">0</div>
+                </div>
+            </div>
+
+            <div class="completion-buttons">
+                <button class="btn btn-secondary" onclick="reviewQuiz()">Review Quiz</button>
+                <button class="btn btn-primary" onclick="retakeQuiz()">Retake Quiz</button>
+            </div>
+        </div>
     </div>
 
-    <div id="score" class="score"></div>
+    <script>
+        const questions = {questions_json};
+        const totalQuestions = questions.length;
+        let currentQuestionIndex = 0;
+        let userAnswers = []; // Store user's answers {{questionIndex, selectedIndex, isCorrect}}
+        let isReviewMode = false;
+
+        function initQuiz() {{
+            renderQuestion();
+        }}
+
+        function renderQuestion() {{
+            const quizContent = document.getElementById('quiz-content');
+            const question = questions[currentQuestionIndex];
+            const userAnswer = userAnswers[currentQuestionIndex];
+
+            const isAnswered = userAnswer !== undefined;
+
+            // Determine button states
+            const showPrevious = currentQuestionIndex > 0;
+            const showNext = isAnswered && currentQuestionIndex < totalQuestions - 1;
+            const showFinish = isAnswered && currentQuestionIndex === totalQuestions - 1 && !isReviewMode;
+            const showFinishReview = isReviewMode && currentQuestionIndex === totalQuestions - 1;
+            const showHint = !!question.hint;
+
+            let optionsHtml = '';
+            question.options.forEach((option, index) => {{
+                const letter = String.fromCharCode(65 + index); // A, B, C, D
+
+                if (isAnswered) {{
+                    if (index === question.correctIndex) {{
+                        const correctExplain = question.correctExplanation || question.explanation || '';
+                        optionsHtml += `
+                            <div class="feedback-card correct show">
+                                <div class="feedback-answer">${{letter}}. ${{option}}</div>
+                                <div class="feedback-header correct">
+                                    <span class="feedback-icon">✓</span>
+                                    <span>Right answer</span>
+                                </div>
+                                <div class="feedback-text">${{correctExplain}}</div>
+                            </div>
+                        `;
+                        return;
+                    }}
+
+                    if (!userAnswer.isCorrect && index === userAnswer.selectedIndex) {{
+                        const wrongExplain = question.wrongExplanation || question.explanation || '';
+                        optionsHtml += `
+                            <div class="feedback-card wrong show">
+                                <div class="feedback-answer">${{letter}}. ${{option}}</div>
+                                <div class="feedback-header wrong">
+                                    <span class="feedback-icon">✕</span>
+                                    <span>Not quite</span>
+                                </div>
+                                <div class="feedback-text">${{wrongExplain}}</div>
+                            </div>
+                        `;
+                        return;
+                    }}
+
+                    optionsHtml += `
+                        <div class="option disabled" data-index="${{index}}">
+                            <span class="option-label">${{letter}}.</span>
+                            <span class="option-text">${{option}}</span>
+                        </div>
+                    `;
+                    return;
+                }}
+
+                const optionClass = index === (userAnswer ? userAnswer.selectedIndex : -1) ? 'option selected' : 'option';
+                optionsHtml += `
+                    <div class="${{optionClass}}" onclick="selectAnswer(${{index}})" data-index="${{index}}">
+                        <span class="option-label">${{letter}}.</span>
+                        <span class="option-text">${{option}}</span>
+                    </div>
+                `;
+            }});
+
+            let hintHtml = '';
+            if (showHint) {{
+                hintHtml = `
+                    <button class="hint-toggle" id="hint-toggle" onclick="toggleHint()">
+                        <span>Hint</span>
+                        <span class="chevron">⌃</span>
+                    </button>
+                    <div id="hint-panel" class="hint-panel">
+                        <div class="hint-title">Hint</div>
+                        <div class="hint-text">${{question.hint}}</div>
+                    </div>
+                `;
+            }}
+
+            let buttonsHtml = `
+                <div class="quiz-footer">
+                    <div class="buttons">
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-secondary" onclick="previousQuestion()" ${{showPrevious ? '' : 'disabled'}}>
+                                Previous
+                            </button>
+                        </div>
+                        <div>
+                            ${{showNext ? '<button class="btn btn-primary" onclick="nextQuestion()">Next</button>' : ''}}
+                            ${{showFinish ? '<button class="btn btn-primary" onclick="finishQuiz()">Finish Quiz</button>' : ''}}
+                            ${{showFinishReview ? '<button class="btn btn-primary" onclick="finishReview()">Finish Review</button>' : ''}}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            quizContent.innerHTML = `
+                <div class="progress-text">${{currentQuestionIndex + 1}} / ${{totalQuestions}}</div>
+                <div class="question-text">${{question.question}}</div>
+                <div class="options">
+                    ${{optionsHtml}}
+                </div>
+                <div class="hint-slot">
+                    ${{hintHtml}}
+                </div>
+                ${{buttonsHtml}}
+            `;
+        }}
+
+        function selectAnswer(selectedIndex) {{
+            const question = questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === question.correctIndex;
+
+            // Store the answer
+            userAnswers[currentQuestionIndex] = {{
+                questionIndex: currentQuestionIndex,
+                selectedIndex: selectedIndex,
+                isCorrect: isCorrect
+            }};
+
+            // Re-render to show feedback
+            renderQuestion();
+        }}
+
+        function toggleHint() {{
+            const hintPanel = document.getElementById('hint-panel');
+            const hintToggle = document.getElementById('hint-toggle');
+            if (hintPanel) {{
+                hintPanel.classList.toggle('show');
+            }}
+            if (hintToggle) {{
+                hintToggle.classList.toggle('open');
+            }}
+        }}
+
+        function nextQuestion() {{
+            if (currentQuestionIndex < totalQuestions - 1) {{
+                currentQuestionIndex++;
+                renderQuestion();
+            }}
+        }}
+
+        function previousQuestion() {{
+            if (currentQuestionIndex > 0) {{
+                currentQuestionIndex--;
+                renderQuestion();
+            }}
+        }}
+
+        function finishQuiz() {{
+            showCompletionScreen();
+        }}
+
+        function showCompletionScreen() {{
+            const quizContent = document.getElementById('quiz-content');
+            const completionScreen = document.getElementById('completion-screen');
+
+            // Calculate stats
+            const answeredQuestions = userAnswers.filter(a => a !== undefined);
+            const correctAnswers = userAnswers.filter(a => a && a.isCorrect).length;
+            const wrongAnswers = userAnswers.filter(a => a && !a.isCorrect).length;
+            const skipped = totalQuestions - answeredQuestions.length;
+            const accuracy = answeredQuestions.length > 0
+                ? Math.round((correctAnswers / answeredQuestions.length) * 100)
+                : 0;
+
+            // Update stats
+            document.getElementById('score-value').textContent = `${{correctAnswers}}/${{totalQuestions}}`;
+            document.getElementById('accuracy-value').textContent = `${{accuracy}}%`;
+            document.getElementById('right-value').textContent = correctAnswers;
+            document.getElementById('wrong-value').textContent = wrongAnswers;
+            document.getElementById('skipped-value').textContent = skipped;
+
+            // Show completion screen
+            quizContent.style.display = 'none';
+            completionScreen.classList.add('show');
+        }}
+
+        function reviewQuiz() {{
+            isReviewMode = true;
+            currentQuestionIndex = 0;
+            const quizContent = document.getElementById('quiz-content');
+            const completionScreen = document.getElementById('completion-screen');
+
+            quizContent.style.display = 'block';
+            completionScreen.classList.remove('show');
+            renderQuestion();
+        }}
+
+        function finishReview() {{
+            showCompletionScreen();
+        }}
+
+        function retakeQuiz() {{
+            isReviewMode = false;
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            const quizContent = document.getElementById('quiz-content');
+            const completionScreen = document.getElementById('completion-screen');
+
+            quizContent.style.display = 'block';
+            completionScreen.classList.remove('show');
+            renderQuestion();
+        }}
+
+        // Initialize quiz on page load
+        initQuiz();
+    </script>
 </body>
-</html>
-"""
+</html>"""
 
-    questions_html = ""
-    for i, q in enumerate(questions, 1):
-        questions_html += f'<div class="question" id="q{i}">\n'
-        questions_html += f'    <div class="question-text">{i}. {q.question}</div>\n'
-
-        if q.type in ["multiple_choice", "true_false"]:
-            questions_html += '    <div class="options">\n'
-            for opt in q.options:
-                questions_html += f'        <div class="option" onclick="selectOption({i}, \'{opt}\')">{opt}</div>\n'
-            questions_html += '    </div>\n'
-            questions_html += f'    <button onclick="checkAnswer({i}, \'{q.correct_answer}\')">Check Answer</button>\n'
-        else:
-            questions_html += f'    <p style="color: #7f8c8d;">Answer: {q.correct_answer}</p>\n'
-
-        questions_html += f'    <div class="explanation"><strong>Explanation:</strong> {q.explanation}</div>\n'
-        questions_html += '</div>\n'
-
-    final_html = html_template.format(
-        questions_html=questions_html,
-        num_questions=len(questions)
-    )
-
-    with open(output_path, 'w') as f:
-        f.write(final_html)
-
-    logger.info(f"HTML quiz saved: {output_path}")
+    return html
 
 
-def generate_quiz(
-    content: str,
-    num_questions: int = 10,
-    difficulty: str = "medium",
-    output_path: str = "quiz.html"
-) -> str:
-    """Generate quiz from content."""
-    logger.info(f"Generating quiz with {num_questions} questions ({difficulty})...")
+def convert_quiz(input_path: str, output_path: str) -> str:
+    """Convert JSON quiz to interactive HTML."""
+    logger.info(f"Loading quiz from {input_path}")
+    quiz_data = load_quiz_data(input_path)
 
-    # Get API key
-    gemini_key = os.getenv("GEMINI_API_KEY", "")
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+    logger.info(f"Generating HTML with {len(quiz_data['questions'])} questions")
+    html = generate_html(quiz_data)
 
-    if gemini_key:
-        response = generate_with_ai(content, num_questions, difficulty, gemini_key, "gemini")
-    elif anthropic_key:
-        response = generate_with_ai(content, num_questions, difficulty, anthropic_key, "anthropic")
-    else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
-        raise ValueError("No API key found")
+    logger.info(f"Writing HTML to {output_path}")
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html)
 
-    # Parse response
-    text = response.strip()
-    if text.startswith("```json"):
-        text = text[7:]
-    if text.startswith("```"):
-        text = text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-
-    data = json.loads(text.strip())
-    questions = [QuizQuestion(**q) for q in data]
-
-    logger.info(f"Generated {len(questions)} questions")
-
-    # Export
-    if output_path.endswith('.html'):
-        export_to_html(questions, output_path)
-    else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
-        # JSON export
-        with open(output_path, 'w') as f:
-            json.dump([q.dict() for q in questions], f, indent=2)
-        logger.info(f"JSON quiz saved: {output_path}")
-
+    logger.success(f"Quiz created: {output_path}")
     return output_path
 
 
 def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", "-i", required=True)
-    parser.add_argument("--output", "-o", default="quiz.html")
-    parser.add_argument("--num", "-n", type=int, default=10)
-    parser.add_argument("--difficulty", "-d", default="medium", choices=["easy", "medium", "hard"])
-    parser.add_argument("--test", action="store_true")
+    parser = argparse.ArgumentParser(description="Convert JSON quiz to interactive HTML")
+    parser.add_argument('-i', '--input', required=True, help='Input JSON file')
+    parser.add_argument('-o', '--output', default='quiz.html', help='Output HTML file')
 
     args = parser.parse_args()
 
-    if args.test:
-        content = "Quantum computing uses qubits. Superposition allows multiple states simultaneously. Entanglement creates quantum correlation. Quantum gates perform operations."
-        result = generate_quiz(content, 5, "easy", "test_quiz.html")
-        print(f"Test quiz: {result}")
-    else:
-        if not args.input:
-            parser.error("--input is required when not in test mode")
-        with open(args.input) as f:
-            content = f.read()
-        result = generate_quiz(content, args.num, args.difficulty, args.output)
-        print(f"Quiz generated: {result}")
+    convert_quiz(args.input, args.output)
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv()
     main()
