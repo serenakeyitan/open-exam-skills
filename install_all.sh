@@ -8,7 +8,6 @@ STABLE_SKILLS=(
   "flashcards"
   "quiz"
   "reports"
-  "infographic"
   "data-table"
   "citation-check"
 )
