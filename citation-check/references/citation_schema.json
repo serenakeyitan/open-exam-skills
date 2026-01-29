@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Citation Map",
+  "description": "Traceability map linking slide claims to source documents",
+  "type": "object",
+  "required": ["slides", "sources", "metadata"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["generated_at", "total_claims", "verified_count", "unverified_count"],
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "presentation_title": {
+          "type": "string"
+        },
+        "total_claims": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verified_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unverified_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Should be 0 for valid output"
+        },
+        "hallucination_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Only populated in audit mode"
+        }
+      }
+    },
+    "slides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slide_number", "title", "claims"],
+        "properties": {
+          "slide_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["text", "status"],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "description": "The claim as it appears on the slide"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["verified", "unverified", "hallucination", "misleading"],
+                  "description": "Verification status of the claim"
+                },
+                "citation": {
+                  "type": "object",
+                  "required": ["source_id", "location"],
+                  "properties": {
+                    "source_id": {
+                      "type": "string",
+                      "description": "Reference to sources object key"
+                    },
+                    "location": {
+                      "type": "string",
+                      "description": "Specific location: 'Section X.Y, p.Z, para.N' or 'Table X, p.Y'"
+                    },
+                    "quote": {
+                      "type": "string",
+                      "description": "Exact supporting text from source (max 100 chars)"
+                    },
+                    "confidence": {
+                      "type": "string",
+                      "enum": ["exact", "paraphrase", "interpretation"],
+                      "description": "How closely the claim matches the source"
+                    }
+                  }
+                },
+                "issue": {
+                  "type": "string",
+                  "description": "Description of problem (for non-verified claims)"
+                },
+                "suggested_fix": {
+                  "type": "string",
+                  "description": "Recommended correction with proper citation"
+                }
+              }
+            }
+          },
+          "visuals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["figure", "table", "chart", "diagram"]
+                },
+                "source_ref": {
+                  "type": "string",
+                  "description": "e.g., 'Figure 3, paper_1, p.8'"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["verified", "modified", "unverified"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["title", "type"],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "year": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["journal", "conference", "arxiv", "report", "book", "website"]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "doi": {
+            "type": "string"
+          },
+          "arxiv_id": {
+            "type": "string",
+            "pattern": "^\\d{4}\\.\\d{4,5}$"
+          }
+        }
+      }
+    }
+  }
+}

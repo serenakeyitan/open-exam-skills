@@ -1,0 +1,11 @@
+name: citation-check
+description: Deterministic citation verification gate with web search or doc-only mode.
+version: 1.0.0
+author: Study Skills Suite
+type: project
+gitignored: true
+
+requires:
+  - python3
+
+main: SKILL.md

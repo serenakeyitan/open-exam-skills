@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Study Skills Suite
+Copyright (c) 2026 Serena
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,13 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-This project is inspired by:
-- Google NotebookLM (https://notebooklm.google/)
-- Open Notebook by lfnovo (https://github.com/lfnovo/open-notebook)
-
-The Study Skills Suite is an independent open-source implementation
-designed for use with Claude, GPT, and Kael and is not affiliated with
-Google or the original NotebookLM service.

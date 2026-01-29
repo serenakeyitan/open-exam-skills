@@ -1,0 +1,23 @@
+#!/bin/bash
+# Auto-installation script for flashcards skill
+
+set -e
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$SKILL_DIR"
+
+echo "🚀 Installing flashcards skill dependencies..."
+
+if python3 -m pip install -q --disable-pip-version-check -r requirements.txt 2>&1 | grep -q "externally-managed-environment"; then
+    echo "   Using --break-system-packages flag..."
+    python3 -m pip install -q --disable-pip-version-check --break-system-packages -r requirements.txt 2>&1 | grep -v "already satisfied" || true
+else
+    python3 -m pip install -q --disable-pip-version-check -r requirements.txt 2>&1 | grep -v "already satisfied" || true
+fi
+
+if [ ! -f .env ] && [ -f .env.example ]; then
+    cp .env.example .env
+    echo "⚠️  Please configure your API keys in .env file"
+fi
+
+echo "✅ flashcards skill installed successfully!"
+exit 0
