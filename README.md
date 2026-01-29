@@ -1,10 +1,10 @@
-# Ultimate Open-Source AI Exam Prep Toolkit (SKILLs)
+# Ultimate Exam Prep Toolkit (SKILLs)
 
-A high-quality collection of study skills built for high school and college students, teachers, and TAs.  
+A high-quality collection of study skills built for students, teachers, and TAs.  
 Interactive mind maps, flashcards and quizzes, citation checking, and complete study workflows.  
 Not just tools, but a smart study companion that learns with you.
 
-You can upload these skills and run them directly inside Claude and GPT, or run them in Kael by simply saying things like “create a mind map for me” or “quiz me on this topic”.
+You can upload these skills and run them directly inside Claude and GPT, or run them in Kael.im for free by simply saying things like “create a mind map for me” or “quiz me on this topic”.
 
 This lets you turn notes into practice questions, concept cards, and even mock exams, all in one conversation.
 
@@ -13,7 +13,7 @@ This lets you turn notes into practice questions, concept cards, and even mock e
 - Students preparing for exams (high school & college)
 - Teachers and TAs creating quizzes, practice exams, and study materials
 
-## Study Workflow Packs (Angle D)
+## Study Workflow Packs
 
 **Student Exam Prep Pack**
 - Notes → mind map → flashcards → quiz → weak-area review
@@ -27,15 +27,15 @@ This lets you turn notes into practice questions, concept cards, and even mock e
 
 ## Skills Table
 
-| Name | What it does | Best for | Output type |
+| Name | What it does | Output type |
 | --- | --- | --- | --- |
-| Mind Map | Turns notes into interactive concept maps | Student | HTML, PNG, Mermaid |
-| Flashcards | Builds fast recall cards from study material | Student | HTML, CSV |
-| Quiz | Generates practice quizzes with explanations | Student | HTML |
-| Reports | Produces structured study reports and briefs | TA | Markdown, PDF, DOCX |
-| Infographic | Summarizes key data into visuals | TA | PNG, SVG |
-| Data Table | Extracts structured tables from sources | TA | CSV, JSON, XLSX |
-| Citation Check | Blocks uncited or inconsistent claims | Both | Markdown report |
+| Mind Map | Turns notes into interactive concept maps | HTML, PNG, Mermaid |
+| Flashcards | Builds fast recall cards from study material | HTML, CSV |
+| Quiz | Generates practice quizzes with explanations | HTML |
+| Reports | Produces structured study reports and briefs | Markdown, PDF, DOCX |
+| Infographic | Summarizes key data into visuals | PNG, SVG |
+| Data Table | Extracts structured tables from sources | CSV, JSON, XLSX |
+| Citation Check | Blocks uncited or inconsistent claims | Markdown report |
 
 ## Installation
 
