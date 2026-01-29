@@ -33,7 +33,6 @@ This lets you turn notes into practice questions, concept cards, and even mock e
 | Flashcards | Builds fast recall cards from study material | Student | HTML, CSV |
 | Quiz | Generates practice quizzes with explanations | Student | HTML |
 | Reports | Produces structured study reports and briefs | TA | Markdown, PDF, DOCX |
-| Infographic | Summarizes key data into visuals | TA | PNG, SVG |
 | Data Table | Extracts structured tables from sources | TA | CSV, JSON, XLSX |
 | Citation Check | Blocks uncited or inconsistent claims | Both | Markdown report |
 
@@ -61,7 +60,7 @@ Each skill reads environment variables from its own `.env` file (created from `.
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | reports, infographic, data-table | Required for AI generation |
+| `GEMINI_API_KEY` | reports, data-table | Required for AI generation |
 | `ANTHROPIC_API_KEY` | reports, data-table | Optional fallback |
 | `ELEVENLABS_API_KEY` | audio-overview, video-overview | Experimental only (dev branch) |
 
@@ -74,13 +73,13 @@ Skills that are pure front-end converters (mindmap, flashcards, quiz) and citati
 - `flashcards`
 - `quiz`
 - `reports`
-- `infographic`
 - `data-table`
 - `citation-check`
 
 **Experimental (dev branch)**
 - `audio-overview`
 - `video-overview`
+- `infographic`
 
 Experimental skills are intentionally separated and are not included in installs or release bundles.
 
