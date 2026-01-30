@@ -1,7 +1,7 @@
 name: citation-check
 description: Deterministic citation verification gate with web search or doc-only mode.
 version: 1.0.0
-author: Study Skills Suite
+author: Open Exam Skills
 type: project
 gitignored: true
 

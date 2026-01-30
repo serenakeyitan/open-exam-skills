@@ -5,14 +5,13 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION="${1:-v0.1.0}"
 DIST_DIR="$ROOT_DIR/dist/$VERSION"
-REPO_NAME="study-skills-suite"
+REPO_NAME="open-exam-skills"
 
 STABLE_SKILLS=(
   "mindmap"
   "flashcards"
   "quiz"
   "reports"
-  "data-table"
   "citation-check"
 )
 

@@ -33,22 +33,22 @@ This lets you turn notes into practice questions, concept cards, and even mock e
 | Flashcards | Builds fast recall cards from study material | Student | HTML, CSV |
 | Quiz | Generates practice quizzes with explanations | Student | HTML |
 | Reports | Produces structured study reports and briefs | TA | Markdown, PDF, DOCX |
-| Data Table | Extracts structured tables from sources | TA | CSV, JSON, XLSX |
 | Citation Check | Blocks uncited or inconsistent claims | Both | Markdown report |
 
 ## Installation
 
 ### Beginner: Download a Release Zip
 
-1. Download the latest release bundle (`study-skills-suite-<version>-all.zip`) or an individual skill zip.
-2. Upload the zip into Claude or GPT (Settings → Skills → Add).
-3. Invoke the skill by name (for example, “mindmap”, “flashcards”, “quiz”, “citation-check”).
+1. Download the latest release bundle (`open-exam-skills-<version>-all.zip`) or an individual skill zip from GitHub Releases.
+2. If you prefer a direct repo download, grab the prepared zips in `dist/v0.1.0/`.
+3. Upload the zip into Claude or GPT (Settings → Skills → Add).
+4. Invoke the skill by name (for example, “mindmap”, “flashcards”, “quiz”, “citation-check”).
 
 ### Advanced: Git Clone + Local Install
 
 ```bash
-git clone https://github.com/serenakeyitan/study-skills-suite.git
-cd study-skills-suite
+git clone https://github.com/serenakeyitan/open-exam-skills.git
+cd open-exam-skills
 ./install_all.sh
 ```
 
@@ -60,8 +60,8 @@ Each skill reads environment variables from its own `.env` file (created from `.
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | reports, data-table | Required for AI generation |
-| `ANTHROPIC_API_KEY` | reports, data-table | Optional fallback |
+| `GEMINI_API_KEY` | reports | Required for AI generation |
+| `ANTHROPIC_API_KEY` | reports | Optional fallback |
 | `ELEVENLABS_API_KEY` | audio-overview, video-overview | Experimental only (dev branch) |
 
 Skills that are pure front-end converters (mindmap, flashcards, quiz) and citation-check require no API keys.
@@ -73,13 +73,13 @@ Skills that are pure front-end converters (mindmap, flashcards, quiz) and citati
 - `flashcards`
 - `quiz`
 - `reports`
-- `data-table`
 - `citation-check`
 
 **Experimental (dev branch)**
 - `audio-overview`
 - `video-overview`
 - `infographic`
+- `data-table`
 
 Experimental skills are intentionally separated and are not included in installs or release bundles.
 

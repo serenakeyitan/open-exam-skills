@@ -6,7 +6,7 @@ Citation Check is a small, opinionated module for **detecting and blocking hallu
 
 Built for research, slides, and agent pipelines where correctness matters.
 
-Part of the Study Skills Suite release collection.
+Part of the Open Exam Skills release collection.
 
 ---
 ## Demo - Identified Issues
