@@ -10,6 +10,24 @@ This lets you turn notes into practice questions, concept cards, and even mock e
 
 ### [Kael.im](https://kael.im) has these skills built in for free. Just say “create a mind map”, “quiz me”, “make flashcards”, or “citation check this”.
 
+## Demos
+### flashcards skill
+
+https://github.com/user-attachments/assets/b87cd587-74a8-4ce9-ae88-63a80e75124b
+
+### quiz skill
+
+https://github.com/user-attachments/assets/bf684b7f-d0fa-4ffc-b16e-b58ea4da01ac
+
+### mindmap skill
+
+https://github.com/user-attachments/assets/690ec675-ee48-4392-a958-f83b9c26e3e5
+
+### citation check skill
+
+https://github.com/user-attachments/assets/f6c92bfa-91a6-440d-8205-d84074de7dbd
+
+
 ## Who This Is For
 
 - Students preparing for exams (high school & college)
