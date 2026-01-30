@@ -1,10 +1,10 @@
-# Ultimate Exam Prep Toolkit (SKILLs)
+# Ultimate Open-Source AI Exam Prep Toolkit (SKILLs)
 
-A high-quality collection of study skills built for students, teachers, and TAs.  
+A high-quality collection of study skills built for high school and college students, teachers, and TAs.  
 Interactive mind maps, flashcards and quizzes, citation checking, and complete study workflows.  
 Not just tools, but a smart study companion that learns with you.
 
-You can upload these skills and run them directly inside Claude and GPT, or run them in Kael.im for free by simply saying things like “create a mind map for me” or “quiz me on this topic”.
+You can upload these skills and run them directly inside Claude and GPT, or run them in Kael by simply saying things like “create a mind map for me” or “quiz me on this topic”.
 
 This lets you turn notes into practice questions, concept cards, and even mock exams, all in one conversation.
 
@@ -13,7 +13,7 @@ This lets you turn notes into practice questions, concept cards, and even mock e
 - Students preparing for exams (high school & college)
 - Teachers and TAs creating quizzes, practice exams, and study materials
 
-## Study Workflow Packs
+## Study Workflow Packs (Angle D)
 
 **Student Exam Prep Pack**
 - Notes → mind map → flashcards → quiz → weak-area review
