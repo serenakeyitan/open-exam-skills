@@ -8,7 +8,6 @@ STABLE_SKILLS=(
   "flashcards"
   "quiz"
   "reports"
-  "data-table"
   "citation-check"
 )
 
@@ -28,7 +27,7 @@ install_requirements() {
   fi
 }
 
-echo "🚀 Installing stable Study Skills Suite skills..."
+echo "🚀 Installing stable Open Exam Skills..."
 
 for skill in "${STABLE_SKILLS[@]}"; do
   skill_dir="$ROOT_DIR/$skill"

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve the Study Skills Suite. This repo is the stable, student-facing baseline for the Kael skill marketplace.
+Thanks for helping improve Open Exam Skills. This repo is the stable, student-facing baseline for the Kael skill marketplace.
 
 ## Adding a New Skill
 
@@ -20,7 +20,7 @@ Thanks for helping improve the Study Skills Suite. This repo is the stable, stud
 ## Folder Structure
 
 ```
-study-skills-suite/
+open-exam-skills/
 ├── skill-name/
 │   ├── SKILL.md
 │   ├── skill.yaml
