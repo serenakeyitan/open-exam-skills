@@ -1,8 +1,6 @@
 ---
 name: citation-check
-
-description: Vision-enabled verification gate with web search. Use when users want to (1) verify slides/reports/PDFs/images against authoritative online sources, (2) validate that citations actually exist and say what's claimed, (3) check charts/graphs/tables for accuracy, (4) audit AI-generated content in doc-only mode (no external knowledge). Two modes - search mode validates against web, doc-only mode ensures everything traces to provided documents. Supports content in any language.
-
+description: Verify citations, claims, and numbers before answering.
 ---
 
 # Citation & Hallucination Checker v2
@@ -10,6 +8,12 @@ description: Vision-enabled verification gate with web search. Use when users wa
 Verification tool with vision + web search. Validates every claim against authoritative sources or provided documents. Works with content in any language.
 
 **Design principle:** Deterministic verification. Same input → Same output.
+
+## Output Contract
+
+- Pass 1 outputs a numbered claim list in the required format.
+- Pass 2 outputs a verification report with status for every claim.
+- If any claim is unverified, hallucinated, or misquoted, block final output until fixed.
 
 ---
 

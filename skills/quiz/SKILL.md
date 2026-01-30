@@ -1,6 +1,6 @@
 ---
 name: quiz
-description: Convert JSON quiz to NotebookLM-style interactive HTML. Features multiple choice (A/B/C/D), answer feedback, hints, completion stats, and review mode. Pure frontend - AI generates JSON, this renders the UI.
+description: Deliver interactive practice quizzes from study material.
 ---
 
 # Quiz
@@ -14,13 +14,18 @@ Convert AI-generated JSON quiz into NotebookLM-style interactive quiz interface.
 
 This is a **pure frontend converter** - AI (Claude/Gemini) generates the quiz as JSON, this skill renders it with NotebookLM's exact UI/UX.
 
+## Output Contract
+
+- Produces a single HTML quiz with scoring, feedback, and review mode.
+- Output file is browser-ready and does not require additional assets.
+
 ## Workflow
 
 ```
 1. User: "Claude, generate a 15-question quiz about biology"
 2. Claude: Generates JSON with questions, options, correct answers, explanations
 3. Save JSON to file (e.g., biology_quiz.json)
-4. Run: python main.py -i biology_quiz.json -o biology_quiz.html
+4. Run from `skills/quiz`: `python main.py -i biology_quiz.json -o biology_quiz.html`
 5. Open HTML → NotebookLM-style quiz interface
 ```
 
@@ -70,6 +75,7 @@ This is a **pure frontend converter** - AI (Claude/Gemini) generates the quiz as
 ## Usage
 
 ```bash
+cd skills/quiz
 python main.py --input quiz.json --output quiz.html
 ```
 
@@ -206,6 +212,7 @@ Claude: Generates JSON and saves to quantum_quiz.json
 
 2. **Convert to interactive HTML**:
 ```bash
+cd skills/quiz
 python main.py -i quantum_quiz.json -o quantum_quiz.html
 ```
 

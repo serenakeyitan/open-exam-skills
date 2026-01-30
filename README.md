@@ -45,6 +45,8 @@ https://github.com/user-attachments/assets/f6c92bfa-91a6-440d-8205-d84074de7dbd
 - Any report, notes, or slides → citation-check
 - No citation, no output
 
+Workflow packs are included under `skills/packs/`.
+
 ## Skills Table
 
 | Name | What it does | Best for | Output type |
@@ -52,17 +54,24 @@ https://github.com/user-attachments/assets/f6c92bfa-91a6-440d-8205-d84074de7dbd
 | Mind Map | Turns notes into interactive concept maps | Student | HTML, PNG, Mermaid |
 | Flashcards | Builds fast recall cards from study material | Student | HTML, CSV |
 | Quiz | Generates practice quizzes with explanations | Student | HTML |
-| Reports | Produces structured study reports and briefs | TA | Markdown, PDF, DOCX |
 | Citation Check | Blocks uncited or inconsistent claims | Both | Markdown report |
+
+The umbrella zip also includes the meta skill `using-open-exam-skills` plus workflow packs under `skills/packs/`.
 
 ## Installation
 
-### Beginner: Download a Release Zip
+### Install One Umbrella Skill (Recommended)
 
-1. Download the latest release bundle (`open-exam-skills-<version>-all.zip`) or an individual skill zip from GitHub Releases.
-2. If you prefer a direct repo download, grab the prepared zips in `dist/v0.1.0/`.
+1. Download the umbrella bundle `open-exam-skills-all.zip` from GitHub Releases.
+2. If you prefer a direct repo download, grab it from `dist/open-exam-skills-all.zip`.
 3. Upload the zip into Claude or GPT (Settings → Skills → Add).
-4. Invoke the skill by name (for example, “mindmap”, “flashcards”, “quiz”, “citation-check”).
+4. Use the meta skill `using-open-exam-skills` or invoke any sub-skill by name.
+
+### Install Individual Skills (Advanced)
+
+1. Download `mindmap.zip`, `flashcards.zip`, `quiz.zip`, or `citation-check.zip` from Releases.
+2. Upload the zip into Claude or GPT (Settings → Skills → Add).
+3. Use the skill name directly.
 
 ### Advanced: Git Clone + Local Install
 
@@ -76,24 +85,18 @@ cd open-exam-skills
 
 ## Environment Variables
 
-Each skill reads environment variables from its own `.env` file (created from `.env.example` when available).
-
-| Variable | Used by | Notes |
-| --- | --- | --- |
-| `GEMINI_API_KEY` | reports | Required for AI generation |
-| `ANTHROPIC_API_KEY` | reports | Optional fallback |
-| `ELEVENLABS_API_KEY` | audio-overview, video-overview | Experimental only (dev branch) |
-
-Skills that are pure front-end converters (mindmap, flashcards, quiz) and citation-check require no API keys.
+Stable skills require no API keys. Experimental audio/video skills on `dev` use `ELEVENLABS_API_KEY`.
 
 ## Supported Skills vs Experimental
 
 **Stable (main)**
-- `mindmap`
-- `flashcards`
-- `quiz`
-- `reports`
-- `citation-check`
+- `skills/using-open-exam-skills`
+- `skills/mindmap`
+- `skills/flashcards`
+- `skills/quiz`
+- `skills/citation-check`
+- `skills/packs/student-exam-prep`
+- `skills/packs/trust-track`
 
 **Experimental (dev branch)**
 - `audio-overview`
@@ -111,7 +114,8 @@ Stable skills are designed for real classrooms: deterministic where possible, do
 
 Each GitHub Release ships:
 
-- One “all skills” zip bundle
+- `open-exam-skills-all.zip` umbrella bundle
+- `open-exam-skills-v<version>-all.zip` versioned release bundle
 - Individual zips per stable skill
 
 Only stable skills from `main` are included.

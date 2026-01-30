@@ -1,6 +1,6 @@
 ---
 name: mindmap
-description: Convert Markdown to interactive mind maps using Markmap. Features smart collapse (first level only), PNG/HTML export, and click-to-prompt for discussion. Same UI/UX as markmap.js.org. Pure frontend.
+description: Create interactive mind maps from notes or outlines.
 ---
 
 # Mind Map
@@ -13,6 +13,11 @@ Convert Markdown files to interactive HTML mind maps with enhanced features. Use
 **Output**: Interactive HTML with enhanced features
 
 This is a **pure converter** - no LLM required. Agent generates Markdown → this skill converts to interactive HTML.
+
+## Output Contract
+
+- Produces a self-contained HTML file with the interactive mind map.
+- Export controls allow users to download PNG and HTML versions from the UI.
 
 ## Enhanced Features
 
@@ -48,13 +53,14 @@ This is a **pure converter** - no LLM required. Agent generates Markdown → thi
 1. Ask Claude: "Generate a mind map about X in Markdown format"
 2. Claude creates Markdown with # ## ### #### hierarchy
 3. Save to file (e.g., mindmap.md)
-4. Run: python main.py -i mindmap.md -o mindmap.html
+4. Run from `skills/mindmap`: `python main.py -i mindmap.md -o mindmap.html`
 5. Open HTML → interact with enhanced mind map
 ```
 
 ## Usage
 
 ```bash
+cd skills/mindmap
 python main.py --input mindmap.md --output mindmap.html
 ```
 
@@ -153,6 +159,7 @@ When asking Agent to generate mind maps:
 
 Then convert:
 ```bash
+cd skills/mindmap
 python main.py -i agent_output.md -o mindmap.html
 ```
 

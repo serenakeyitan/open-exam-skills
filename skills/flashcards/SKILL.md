@@ -1,6 +1,6 @@
 ---
 name: flashcards
-description: Convert JSON flashcards to NotebookLM-style interactive HTML. Features card flip animation, keyboard navigation, and CSV export. Pure frontend - AI generates JSON, this renders the UI.
+description: Render study flashcards into an interactive HTML deck.
 ---
 
 # Flashcards
@@ -14,13 +14,18 @@ Convert AI-generated JSON flashcards into NotebookLM-style interactive study int
 
 This is a **pure frontend converter** - AI (Claude/Gemini) generates the flashcards as JSON, this skill renders them with NotebookLM's exact UI/UX.
 
+## Output Contract
+
+- Produces a single HTML file containing the interactive flashcard deck.
+- Optional CSV export is available from the UI.
+
 ## Workflow
 
 ```
 1. User: "Claude, generate 50 flashcards about quantum physics"
 2. Claude: Generates JSON with {question, answer} pairs
 3. Save JSON to file (e.g., flashcards.json)
-4. Run: python main.py -i flashcards.json -o flashcards.html
+4. Run from `skills/flashcards`: `python main.py -i flashcards.json -o flashcards.html`
 5. Open HTML → NotebookLM-style flashcard interface
 ```
 
@@ -74,6 +79,7 @@ This is a **pure frontend converter** - AI (Claude/Gemini) generates the flashca
 ## Usage
 
 ```bash
+cd skills/flashcards
 python main.py --input flashcards.json --output flashcards.html
 ```
 
@@ -177,6 +183,7 @@ Claude: Generates JSON and saves to entomology.json
 
 2. **Convert to interactive HTML**:
 ```bash
+cd skills/flashcards
 python main.py -i entomology.json -o entomology.html
 ```
 

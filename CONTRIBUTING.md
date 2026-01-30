@@ -4,7 +4,7 @@ Thanks for helping improve Open Exam Skills. This repo is the stable, student-fa
 
 ## Adding a New Skill
 
-1. Create a top-level folder named after the skill (kebab-case).
+1. Create a folder under `skills/` named after the skill (kebab-case).
 2. Include the standard files:
    - `SKILL.md` (required user-facing instructions)
    - `skill.yaml` (skill metadata)
@@ -17,17 +17,22 @@ Thanks for helping improve Open Exam Skills. This repo is the stable, student-fa
    - `install_all.sh` (stable installs only)
    - `scripts/package_release.sh` (release bundling)
 
+## Linting
+
+Run `scripts/check_skill_frontmatter.py` to verify skill frontmatter conventions.
+
 ## Folder Structure
 
 ```
 open-exam-skills/
-├── skill-name/
-│   ├── SKILL.md
-│   ├── skill.yaml
-│   ├── requirements.txt
-│   ├── main.py (if applicable)
-│   ├── scripts/install.sh
-│   └── .env.example (if needed)
+├── skills/
+│   ├── skill-name/
+│   │   ├── SKILL.md
+│   │   ├── skill.yaml
+│   │   ├── requirements.txt
+│   │   ├── main.py (if applicable)
+│   │   ├── scripts/install.sh
+│   │   └── .env.example (if needed)
 ```
 
 ## Quality Bar

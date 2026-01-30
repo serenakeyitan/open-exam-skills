@@ -7,7 +7,6 @@ STABLE_SKILLS=(
   "mindmap"
   "flashcards"
   "quiz"
-  "reports"
   "citation-check"
 )
 
@@ -30,7 +29,7 @@ install_requirements() {
 echo "🚀 Installing stable Open Exam Skills..."
 
 for skill in "${STABLE_SKILLS[@]}"; do
-  skill_dir="$ROOT_DIR/$skill"
+  skill_dir="$ROOT_DIR/skills/$skill"
 
   if [ ! -d "$skill_dir" ]; then
     echo "⚠️  Skipping missing skill: $skill"
