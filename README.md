@@ -33,7 +33,7 @@ https://github.com/user-attachments/assets/f6c92bfa-91a6-440d-8205-d84074de7dbd
 - Students preparing for exams (high school & college)
 - Teachers and TAs creating quizzes, practice exams, and study materials
 
-## Study Workflow Packs (Angle D)
+## Study Workflow Packs
 
 **Student Exam Prep Pack**
 - Notes → mind map → flashcards → quiz → weak-area review
