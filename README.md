@@ -8,7 +8,7 @@ You can upload these skills and run them directly inside Claude and GPT, or run 
 
 This lets you turn notes into practice questions, concept cards, and even mock exams, all in one conversation.
 
-[Kael.im](https://kael.im) has these skills built in for free. Just say “create a mind map”, “quiz me”, “make flashcards”, or “citation check this”.
+### [Kael.im](https://kael.im) has these skills built in for free. Just say “create a mind map”, “quiz me”, “make flashcards”, or “citation check this”.
 
 ## Who This Is For
 
