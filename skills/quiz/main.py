@@ -5,12 +5,76 @@ Pure frontend converter - no AI/LLM required
 
 import json
 import argparse
+import shutil
 from pathlib import Path
+from typing import Optional
 from loguru import logger
 import sys
 
 logger.remove()
 logger.add(sys.stderr, level="INFO")
+
+
+def find_katex_dist() -> Optional[Path]:
+    npm_cache = Path.home() / '.npm' / '_npx'
+    candidates = []
+
+    if npm_cache.exists():
+        candidates.extend(npm_cache.glob('*/node_modules/katex/dist'))
+
+    local_node_modules = Path.cwd() / 'node_modules' / 'katex' / 'dist'
+    if local_node_modules.exists():
+        candidates.append(local_node_modules)
+
+    if not candidates:
+        return None
+
+    return max(candidates, key=lambda path: path.stat().st_mtime)
+
+
+def get_katex_assets() -> dict:
+    dist = find_katex_dist()
+    if dist:
+        css_path = dist / 'katex.min.css'
+        js_path = dist / 'katex.min.js'
+        auto_render_path = dist / 'contrib' / 'auto-render.min.js'
+        if css_path.exists() and js_path.exists() and auto_render_path.exists():
+            css = css_path.read_text(encoding='utf-8')
+            katex_js = js_path.read_text(encoding='utf-8')
+            auto_render_js = auto_render_path.read_text(encoding='utf-8')
+            return {
+                'styles': f"<style>{css}</style>",
+                'scripts': f"<script>{katex_js}</script>\n<script>{auto_render_js}</script>",
+                'fonts_dir': dist / 'fonts'
+            }
+
+    version = '0.16.18'
+    return {
+        'styles': (
+            f"<link rel=\"stylesheet\" "
+            f"href=\"https://cdn.jsdelivr.net/npm/katex@{version}/dist/katex.min.css\">"
+        ),
+        'scripts': (
+            f"<script src=\"https://cdn.jsdelivr.net/npm/katex@{version}/dist/katex.min.js\"></script>\n"
+            f"<script src=\"https://cdn.jsdelivr.net/npm/katex@{version}/dist/contrib/auto-render.min.js\"></script>"
+        ),
+        'fonts_dir': None
+    }
+
+
+def ensure_katex_fonts(output_path: str, fonts_dir: Optional[Path]) -> None:
+    if not fonts_dir or not fonts_dir.exists():
+        return
+
+    output_dir = Path(output_path).resolve().parent
+    dest_dir = output_dir / 'fonts'
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    for font_file in fonts_dir.glob('*'):
+        if font_file.is_file():
+            shutil.copy2(font_file, dest_dir / font_file.name)
+
+    logger.info(f"✓ KaTeX fonts copied to: {dest_dir}")
 
 
 def load_quiz_data(json_path: str) -> dict:
@@ -27,7 +91,7 @@ def load_quiz_data(json_path: str) -> dict:
     return data
 
 
-def generate_html(quiz_data: dict) -> str:
+def generate_html(quiz_data: dict, katex_assets: dict) -> str:
     """Generate interactive quiz HTML."""
 
     title = quiz_data.get("title", "Quiz")
@@ -36,6 +100,9 @@ def generate_html(quiz_data: dict) -> str:
 
     # Convert questions to JSON string for embedding
     questions_json = json.dumps(questions, ensure_ascii=False)
+
+    katex_styles = katex_assets['styles']
+    katex_scripts = katex_assets['scripts']
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -446,6 +513,7 @@ def generate_html(quiz_data: dict) -> str:
             display: block;
         }}
     </style>
+    {katex_styles}
 </head>
 <body>
     <div class="quiz-container">
@@ -493,12 +561,26 @@ def generate_html(quiz_data: dict) -> str:
         </div>
     </div>
 
+    {katex_scripts}
     <script>
         const questions = {questions_json};
         const totalQuestions = questions.length;
         let currentQuestionIndex = 0;
         let userAnswers = []; // Store user's answers {{questionIndex, selectedIndex, isCorrect}}
         let isReviewMode = false;
+
+        function renderMath(target) {{
+            if (!target || typeof renderMathInElement !== 'function') return;
+            renderMathInElement(target, {{
+                delimiters: [
+                    {{left: '$$', right: '$$', display: true}},
+                    {{left: '$', right: '$', display: false}},
+                    {{left: '\\(', right: '\\)', display: false}},
+                    {{left: '\\[', right: '\\]', display: true}}
+                ],
+                throwOnError: false
+            }});
+        }}
 
         function initQuiz() {{
             renderQuestion();
@@ -613,6 +695,7 @@ def generate_html(quiz_data: dict) -> str:
                 </div>
                 ${{buttonsHtml}}
             `;
+            renderMath(quizContent);
         }}
 
         function selectAnswer(selectedIndex) {{
@@ -726,12 +809,14 @@ def convert_quiz(input_path: str, output_path: str) -> str:
     quiz_data = load_quiz_data(input_path)
 
     logger.info(f"Generating HTML with {len(quiz_data['questions'])} questions")
-    html = generate_html(quiz_data)
+    katex_assets = get_katex_assets()
+    html = generate_html(quiz_data, katex_assets)
 
     logger.info(f"Writing HTML to {output_path}")
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html)
 
+    ensure_katex_fonts(output_path, katex_assets['fonts_dir'])
     logger.success(f"Quiz created: {output_path}")
     return output_path
 

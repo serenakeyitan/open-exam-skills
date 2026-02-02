@@ -8,14 +8,83 @@ import base64
 import json
 import os
 import sys
+import shutil
 from pathlib import Path
+from typing import Optional
 from loguru import logger
 
 logger.remove()
 logger.add(sys.stderr, level="INFO")
 
 
-def generate_notebooklm_html(flashcards: list, output_path: str, title: str = "Flashcards") -> None:
+def find_katex_dist() -> Optional[Path]:
+    npm_cache = Path.home() / '.npm' / '_npx'
+    candidates = []
+
+    if npm_cache.exists():
+        candidates.extend(npm_cache.glob('*/node_modules/katex/dist'))
+
+    local_node_modules = Path.cwd() / 'node_modules' / 'katex' / 'dist'
+    if local_node_modules.exists():
+        candidates.append(local_node_modules)
+
+    if not candidates:
+        return None
+
+    return max(candidates, key=lambda path: path.stat().st_mtime)
+
+
+def get_katex_assets() -> dict:
+    dist = find_katex_dist()
+    if dist:
+        css_path = dist / 'katex.min.css'
+        js_path = dist / 'katex.min.js'
+        auto_render_path = dist / 'contrib' / 'auto-render.min.js'
+        if css_path.exists() and js_path.exists() and auto_render_path.exists():
+            css = css_path.read_text(encoding='utf-8')
+            katex_js = js_path.read_text(encoding='utf-8')
+            auto_render_js = auto_render_path.read_text(encoding='utf-8')
+            return {
+                'styles': f"<style>{css}</style>",
+                'scripts': f"<script>{katex_js}</script>\n<script>{auto_render_js}</script>",
+                'fonts_dir': dist / 'fonts'
+            }
+
+    version = '0.16.18'
+    return {
+        'styles': (
+            f"<link rel=\"stylesheet\" "
+            f"href=\"https://cdn.jsdelivr.net/npm/katex@{version}/dist/katex.min.css\">"
+        ),
+        'scripts': (
+            f"<script src=\"https://cdn.jsdelivr.net/npm/katex@{version}/dist/katex.min.js\"></script>\n"
+            f"<script src=\"https://cdn.jsdelivr.net/npm/katex@{version}/dist/contrib/auto-render.min.js\"></script>"
+        ),
+        'fonts_dir': None
+    }
+
+
+def ensure_katex_fonts(output_path: str, fonts_dir: Optional[Path]) -> None:
+    if not fonts_dir or not fonts_dir.exists():
+        return
+
+    output_dir = Path(output_path).resolve().parent
+    dest_dir = output_dir / 'fonts'
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    for font_file in fonts_dir.glob('*'):
+        if font_file.is_file():
+            shutil.copy2(font_file, dest_dir / font_file.name)
+
+    logger.info(f"✓ KaTeX fonts copied to: {dest_dir}")
+
+
+def generate_notebooklm_html(
+    flashcards: list,
+    output_path: str,
+    title: str = "Flashcards",
+    katex_assets: Optional[dict] = None
+) -> None:
     """Generate interactive flashcard HTML."""
 
     logger.info(f"Generating HTML for {len(flashcards)} flashcards...")
@@ -41,6 +110,10 @@ def generate_notebooklm_html(flashcards: list, output_path: str, title: str = "F
         logger.info("✓ Loaded Confetti_white.png")
     else:
         logger.warning(f"⚠ Confetti_white.png not found at {confetti_white_path}")
+
+    katex_assets = katex_assets or get_katex_assets()
+    katex_styles = katex_assets['styles']
+    katex_scripts = katex_assets['scripts']
 
     html_template = """<!DOCTYPE html>
 <html lang="en">
@@ -325,6 +398,7 @@ def generate_notebooklm_html(flashcards: list, output_path: str, title: str = "F
             stroke: none;
         }}
     </style>
+    {katex_styles}
 </head>
 <body>
     <div class="header">
@@ -378,10 +452,24 @@ def generate_notebooklm_html(flashcards: list, output_path: str, title: str = "F
         </button>
     </div>
 
+    {katex_scripts}
     <script>
         const flashcards = {flashcards_json};
         let currentIndex = 0;
         let isFlipped = false;
+
+        function renderMath(target) {{
+            if (!target || typeof renderMathInElement !== 'function') return;
+            renderMathInElement(target, {{
+                delimiters: [
+                    {{left: '$$', right: '$$', display: true}},
+                    {{left: '$', right: '$', display: false}},
+                    {{left: '\\(', right: '\\)', display: false}},
+                    {{left: '\\[', right: '\\]', display: true}}
+                ],
+                throwOnError: false
+            }});
+        }}
 
         function formatAnswerForExam(text) {{
             if (!text) return '';
@@ -487,6 +575,9 @@ def generate_notebooklm_html(flashcards: list, output_path: str, title: str = "F
             answer.innerHTML = formatAnswerForExam(flashcards[currentIndex].answer);
             current.textContent = currentIndex + 1;
 
+            renderMath(question);
+            renderMath(answer);
+
             // Reset flip
             if (isFlipped) {{
                 card.classList.remove('flipped');
@@ -572,7 +663,9 @@ def generate_notebooklm_html(flashcards: list, output_path: str, title: str = "F
         total=len(flashcards),
         flashcards_json=flashcards_json,
         confetti_black_b64=confetti_black_b64,
-        confetti_white_b64=confetti_white_b64
+        confetti_white_b64=confetti_white_b64,
+        katex_styles=katex_styles,
+        katex_scripts=katex_scripts
     )
 
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -618,7 +711,9 @@ def convert_json_to_flashcards(json_path: str, output_path: str) -> str:
     logger.info(f"Title: {title}")
 
     # Generate HTML
-    generate_notebooklm_html(flashcards, output_path, title)
+    katex_assets = get_katex_assets()
+    generate_notebooklm_html(flashcards, output_path, title, katex_assets)
+    ensure_katex_fonts(output_path, katex_assets['fonts_dir'])
 
     file_size = os.path.getsize(output_path) / 1024
 

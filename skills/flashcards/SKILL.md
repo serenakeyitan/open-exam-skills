@@ -87,6 +87,19 @@ Parameters:
 - `--input`, `-i`: Input JSON file (required)
 - `--output`, `-o`: Output HTML file (default: flashcards.html)
 
+## Math (KaTeX)
+
+Use LaTeX delimiters in questions or answers to render formulas:
+
+```text
+$E=mc^2$ inline, or $$\nabla \cdot \vec{B} = 0$$ block
+```
+
+Notes:
+- Inline math uses `$...$` and block math uses `$$...$$`.
+- Escape literal dollar signs as `\$` to avoid math parsing.
+- When local KaTeX assets are available, a `fonts/` folder is created next to the HTML for offline rendering.
+
 ## NotebookLM-Style Features
 
 ### Visual Design

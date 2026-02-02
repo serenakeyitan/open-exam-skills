@@ -83,6 +83,19 @@ Parameters:
 - `--input`, `-i`: Input JSON file (required)
 - `--output`, `-o`: Output HTML file (default: quiz.html)
 
+## Math (KaTeX)
+
+Use LaTeX delimiters in questions, options, hints, or explanations to render formulas:
+
+```text
+$\frac{a}{b}$ inline, or $$\int_0^1 x^2\,dx$$ block
+```
+
+Notes:
+- Inline math uses `$...$` and block math uses `$$...$$`.
+- Escape literal dollar signs as `\$` to avoid math parsing.
+- When local KaTeX assets are available, a `fonts/` folder is created next to the HTML for offline rendering.
+
 ## NotebookLM-Style Features
 
 ### Visual Design
