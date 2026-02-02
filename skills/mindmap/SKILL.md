@@ -88,6 +88,23 @@ Parameters:
 ### Subtopic 2.1
 ```
 
+## Math (KaTeX)
+
+Markmap includes a KaTeX plugin, so math renders automatically when you use
+LaTeX delimiters inside headings.
+
+```markdown
+# Calculus
+## Euler: $e^{i\pi}+1=0$
+## Area
+### $$\int_0^1 x^2\,dx = \frac{1}{3}$$
+```
+
+Notes:
+- Inline math uses `$...$` and block math uses `$$...$$`.
+- Escape literal dollar signs as `\$` to avoid math parsing.
+- When math is present, a `fonts/` folder is created next to the HTML output.
+
 ## User Interactions
 
 | Action | Behavior |

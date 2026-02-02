@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import re
+import shutil
 from pathlib import Path
 from loguru import logger
 
@@ -453,6 +454,56 @@ def inject_custom_features(html_path: str) -> None:
     logger.info("✓ Custom features injected")
 
 
+def get_markmap_command() -> list[str]:
+    """Find a local markmap-cli command or fall back to npx."""
+
+    markmap_bin = shutil.which("markmap")
+    if markmap_bin:
+        return [markmap_bin]
+
+    npm_cache = Path.home() / '.npm' / '_npx'
+    if npm_cache.exists():
+        candidates = list(npm_cache.glob('*/node_modules/markmap-cli/bin/cli.js'))
+        if candidates:
+            latest = max(candidates, key=lambda path: path.stat().st_mtime)
+            node_bin = shutil.which('node') or 'node'
+            return [node_bin, str(latest)]
+
+    return ['npx', '-y', 'markmap-cli']
+
+
+def ensure_katex_fonts(html_path: str) -> None:
+    """Copy KaTeX fonts next to the output HTML if needed."""
+
+    with open(html_path, 'r', encoding='utf-8') as f:
+        html_content = f.read()
+
+    if 'katex' not in html_content or 'fonts/KaTeX_' not in html_content:
+        return
+
+    output_dir = Path(html_path).resolve().parent
+    fonts_dir = output_dir / 'fonts'
+
+    npm_cache = Path.home() / '.npm' / '_npx'
+    if not npm_cache.exists():
+        logger.warning("KaTeX fonts not copied: npm cache not found")
+        return
+
+    font_paths = list(npm_cache.glob('*/node_modules/markmap-cli/dist/assets/katex@*/dist/fonts'))
+    if not font_paths:
+        logger.warning("KaTeX fonts not copied: markmap-cli assets not found")
+        return
+
+    source_fonts = max(font_paths, key=lambda path: path.stat().st_mtime)
+    fonts_dir.mkdir(parents=True, exist_ok=True)
+
+    for font_file in source_fonts.glob('*'):
+        if font_file.is_file():
+            shutil.copy2(font_file, fonts_dir / font_file.name)
+
+    logger.info(f"✓ KaTeX fonts copied to: {fonts_dir}")
+
+
 def convert_markdown_to_mindmap(markdown_path: str, output_path: str) -> str:
     """Convert Markdown file to interactive HTML mind map using markmap-cli."""
 
@@ -476,11 +527,9 @@ def convert_markdown_to_mindmap(markdown_path: str, output_path: str) -> str:
     logger.info("Converting Markdown to interactive HTML using Markmap...")
 
     try:
-        # Use npx to run markmap-cli with offline assets
+        markmap_cmd = get_markmap_command()
         cmd = [
-            'npx',
-            '-y',  # Auto-confirm installation
-            'markmap-cli',
+            *markmap_cmd,
             '--offline',  # Include all assets for offline viewing
             markdown_path,
             '-o', output_path
@@ -504,6 +553,7 @@ def convert_markdown_to_mindmap(markdown_path: str, output_path: str) -> str:
 
         # Inject custom features
         inject_custom_features(output_path)
+        ensure_katex_fonts(output_path)
 
         file_size = os.path.getsize(output_path) / 1024
 
